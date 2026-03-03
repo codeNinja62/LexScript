@@ -6,6 +6,7 @@ package lsp
 import (
 	"context"
 	"encoding/json"
+	"fmt"
 	"os"
 	"sync"
 
@@ -55,10 +56,14 @@ type stdrwc struct{}
 func (stdrwc) Read(p []byte) (int, error)  { return os.Stdin.Read(p) }
 func (stdrwc) Write(p []byte) (int, error) { return os.Stdout.Write(p) }
 func (stdrwc) Close() error {
-	if err := os.Stdin.Close(); err != nil {
-		return err
+	// Close both regardless of individual errors; stdin may already be
+	// closed on the Windows side of a pipe when the client disconnects.
+	errIn := os.Stdin.Close()
+	errOut := os.Stdout.Close()
+	if errIn != nil {
+		return errIn
 	}
-	return os.Stdout.Close()
+	return errOut
 }
 
 // ---------------------------------------------------------------------------
@@ -68,6 +73,23 @@ func (stdrwc) Close() error {
 type handler struct{}
 
 func (h *handler) Handle(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	// Recover from any panic in a handler so the LSP server process does not
+	// crash. Without this, a single nil-dereference kills the entire server
+	// and VS Code shows "Server shutdown unexpectedly".
+	defer func() {
+		if r := recover(); r != nil {
+			// Report the panic as a JSON-RPC error if the request expects a reply.
+			if !req.Notif {
+				_ = conn.ReplyWithError(ctx, req.ID, &jsonrpc2.Error{
+					Code:    jsonrpc2.CodeInternalError,
+					Message: fmt.Sprintf("internal error: %v", r),
+				})
+			}
+			// Write to stderr — VS Code shows this in Output > LexScript Language Server.
+			_, _ = fmt.Fprintf(os.Stderr, "[lexscript-lsp] panic in %s: %v\n", req.Method, r)
+		}
+	}()
+
 	switch req.Method {
 
 	// ---- General Messages ----
@@ -141,6 +163,9 @@ func (h *handler) handleInitialize(ctx context.Context, conn *jsonrpc2.Conn, req
 // ---------------------------------------------------------------------------
 
 func (h *handler) handleDidOpen(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	if req.Params == nil {
+		return
+	}
 	var params DidOpenTextDocumentParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return
@@ -152,6 +177,9 @@ func (h *handler) handleDidOpen(ctx context.Context, conn *jsonrpc2.Conn, req *j
 }
 
 func (h *handler) handleDidChange(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	if req.Params == nil {
+		return
+	}
 	var params DidChangeTextDocumentParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return
@@ -165,6 +193,9 @@ func (h *handler) handleDidChange(ctx context.Context, conn *jsonrpc2.Conn, req 
 }
 
 func (h *handler) handleDidSave(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	if req.Params == nil {
+		return
+	}
 	var params DidSaveTextDocumentParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return
@@ -179,6 +210,9 @@ func (h *handler) handleDidSave(ctx context.Context, conn *jsonrpc2.Conn, req *j
 }
 
 func (h *handler) handleDidClose(_ context.Context, _ *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	if req.Params == nil {
+		return
+	}
 	var params DidCloseTextDocumentParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		return

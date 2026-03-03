@@ -13,6 +13,10 @@ import (
 )
 
 func (h *handler) handleHover(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	if req.Params == nil {
+		_ = conn.Reply(ctx, req.ID, nil)
+		return
+	}
 	var params HoverParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		_ = conn.Reply(ctx, req.ID, nil)

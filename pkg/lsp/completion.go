@@ -11,6 +11,10 @@ import (
 )
 
 func (h *handler) handleCompletion(ctx context.Context, conn *jsonrpc2.Conn, req *jsonrpc2.Request) {
+	if req.Params == nil {
+		_ = conn.Reply(ctx, req.ID, []CompletionItem{})
+		return
+	}
 	var params CompletionParams
 	if err := json.Unmarshal(*req.Params, &params); err != nil {
 		_ = conn.Reply(ctx, req.ID, []CompletionItem{})
