@@ -5,7 +5,6 @@ import {
   LanguageClient,
   LanguageClientOptions,
   ServerOptions,
-  TransportKind,
 } from "vscode-languageclient/node";
 import { resolveLexsBinary } from "./resolveBinary";
 
@@ -15,8 +14,8 @@ export function startClient(context: ExtensionContext): void {
   const command = resolveLexsBinary();
 
   const serverOptions: ServerOptions = {
-    run: { command, args: ["lsp"], transport: TransportKind.stdio },
-    debug: { command, args: ["lsp"], transport: TransportKind.stdio },
+    run:   { command, args: ["lsp"] },
+    debug: { command, args: ["lsp"] },
   };
 
   const clientOptions: LanguageClientOptions = {

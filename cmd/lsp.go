@@ -6,6 +6,11 @@ import (
 	"github.com/spf13/cobra"
 )
 
+// lspStdio is accepted but ignored — the server always communicates over
+// stdin/stdout. The flag exists so vscode-languageclient (TransportKind.stdio)
+// can pass --stdio without causing an "unknown flag" error.
+var lspStdio bool
+
 var lspCmd = &cobra.Command{
 	Use:   "lsp",
 	Short: "Start the LexScript Language Server Protocol server (stdin/stdout)",
@@ -26,4 +31,5 @@ Capabilities:
 
 func init() {
 	rootCmd.AddCommand(lspCmd)
+	lspCmd.Flags().BoolVar(&lspStdio, "stdio", false, "use stdin/stdout transport (default and only mode; flag accepted for editor compatibility)")
 }
