@@ -79,11 +79,12 @@ type DateData struct {
 
 // StateData is the template representation of a StateDecl.
 type StateData struct {
-	Name        string
-	IsTerminal  bool
-	TermKind    string // "fulfilled" | "breached" | "expired"
-	Obligations []ObligationData
-	Transitions []TransitionData
+	Name          string
+	IsTerminal    bool
+	TermKind      string // "fulfilled" | "breached" | "expired"
+	SectionNumber int    // 1-based index among non-terminal states (used for §3 subsection numbering)
+	Obligations   []ObligationData
+	Transitions   []TransitionData
 }
 
 // ObligationData represents a require statement.
@@ -205,7 +206,16 @@ func (e *Emitter) buildData(c *ast.Contract, jurisdiction string) ContractData {
 			})
 
 		case decl.State != nil:
-			data.States = append(data.States, e.buildStateData(decl.State))
+			sd := e.buildStateData(decl.State)
+			data.States = append(data.States, sd)
+		}
+	}
+	// Assign 1-based section numbers to non-terminal states for §3 subsection numbering
+	nonTermIdx := 0
+	for i := range data.States {
+		if !data.States[i].IsTerminal {
+			nonTermIdx++
+			data.States[i].SectionNumber = nonTermIdx
 		}
 	}
 	return data

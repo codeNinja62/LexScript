@@ -39,13 +39,13 @@ set forth below:
 {{- end }}{{ end }}
 
 Any term not defined herein shall be given its ordinary meaning under
-applicable {{ .Jurisdiction.DisplayName }} law.
+{{ .Jurisdiction.LegalSystemName }}.
 
 ---
 
 ## 3. Obligations and Performance
 {{ range .States }}{{ if not .IsTerminal }}
-### 3. {{ titleCase .Name }}
+### 3.{{ .SectionNumber }} {{ titleCase .Name }}
 
 **Phase:** {{ titleCase .Name }}
 

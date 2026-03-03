@@ -1,12 +1,12 @@
 # Employment Agreement
 
 **Date:** March 3, 2026
-**Governing Law:** State of Delaware
+**Governing Law:** Pakistan
 
 ---
 
 *This Agreement ("Agreement") is entered into as of March 3, 2026 by and between
-the parties identified herein. The terms of this Agreement shall be governed by and construed in accordance with the laws of the State of Delaware, excluding its conflict of laws provisions.
+the parties identified herein. The terms of this Agreement shall be governed by and construed in accordance with the laws of Pakistan, including the Contract Act, 1872, and all other applicable legislation of Pakistan, excluding any conflict of laws provisions.
 The parties intend this Agreement to be legally binding.*
 
 ---
@@ -44,7 +44,7 @@ set forth below:
 - **"Contract Expiry"** means April 1, 2028 (2028-04-01).
 
 Any term not defined herein shall be given its ordinary meaning under
-the laws of the State of Delaware.
+the laws of Pakistan.
 
 ---
 
@@ -143,7 +143,7 @@ the parties with respect to the subject matter hereof and supersedes all prior
 negotiations, representations, warranties, and understandings, whether oral or
 written.
 
-**5.2 Severability.** If any provision of this Agreement is held by a court of competent jurisdiction to be invalid, illegal, or unenforceable under the laws of the State of Delaware, the remaining provisions shall continue in full force and effect. The parties further agree that any such invalid provision shall be modified to the minimum extent necessary to make it enforceable.
+**5.2 Severability.** If any provision of this Agreement is held by a court of competent jurisdiction to be invalid, illegal, or unenforceable under the laws of Pakistan, the remaining provisions shall continue in full force and effect. The parties further agree that any such provision shall be modified to the minimum extent necessary to render it enforceable in accordance with Pakistani law.
 
 **5.3 Amendments.** No amendment, modification, or supplement to this Agreement
 shall be valid or binding unless made in writing and duly executed by all parties.
@@ -162,7 +162,9 @@ be in writing and shall be deemed duly given when delivered personally, sent
 by confirmed electronic transmission, or deposited in the mail with first-class
 postage prepaid.
 
-**5.7 Delaware Statutory Authority.** The parties acknowledge that this Agreement is entered into in reliance upon the laws of the State of Delaware, including the Delaware General Corporation Law (8 Del. C. § 101 et seq.) where applicable, and that the courts of Delaware shall have authority to interpret and enforce the terms of this Agreement in accordance with such laws.
+**5.7 Contract Act, 1872.** The parties acknowledge that this Agreement is subject to the provisions of the Contract Act, 1872, as applicable in Pakistan, including the requirements of free consent, lawful consideration, and lawful object. Any provision of this Agreement found to be contrary to the mandatory provisions of the Contract Act, 1872 shall be void to that extent only.
+
+**5.8 Stamp Duty.** The parties shall be responsible for paying all applicable stamp duty on this Agreement as required under the Stamp Act, 1899 (as applicable in the relevant province of Pakistan). Failure to pay stamp duty shall not affect the validity of this Agreement between the parties but may affect its admissibility in evidence before a Pakistani court.
 
 
 ---
@@ -182,7 +184,7 @@ of this Agreement:
 
 ## 7. Dispute Resolution
 
-Any dispute, controversy, or claim arising out of or relating to this Agreement shall be exclusively resolved in the Court of Chancery of the State of Delaware, or, if the Court of Chancery lacks jurisdiction, in the Superior Court of the State of Delaware or the United States District Court for the District of Delaware. Each party hereby irrevocably consents to the personal jurisdiction of such courts and waives any objection to venue therein.
+Any dispute, controversy, or claim arising out of or relating to this Agreement, or the breach, termination, or invalidity thereof, shall first be referred to good-faith negotiation between senior representatives of the parties. If unresolved within thirty (30) days, the dispute shall be submitted to binding arbitration in accordance with the Arbitration Act, 1940 (as amended) of Pakistan, with the seat of arbitration in Karachi or such other city as the parties may mutually agree. The language of the arbitration shall be English. Judgment on the arbitral award may be enforced in any court of competent jurisdiction in Pakistan.
 
 ---
 

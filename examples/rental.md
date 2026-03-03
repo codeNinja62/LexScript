@@ -38,13 +38,13 @@ set forth below:
 
 
 Any term not defined herein shall be given its ordinary meaning under
-applicable Common Law law.
+applicable common law.
 
 ---
 
 ## 3. Obligations and Performance
 
-### 3. Awaiting Deposit
+### 3.1 Awaiting Deposit
 
 **Phase:** Awaiting Deposit
 
@@ -62,7 +62,7 @@ Upon the occurrence of **Payment Received**, this Agreement shall transition to 
 
 Upon the expiration of the **Payment Grace** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Expired** phase.
 
-### 3. Active
+### 3.2 Active
 
 **Phase:** Active
 

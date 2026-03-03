@@ -30,7 +30,8 @@ Jurisdiction (--jurisdiction / -j):
   common      Generic common law boilerplate (default)
   delaware    State of Delaware clause library
   california  State of California clause library (JAMS arbitration)
-  uk          England and Wales clause library (LCIA arbitration)`,
+  uk          England and Wales clause library (LCIA arbitration)
+  pakistan    Pakistan clause library (Contract Act 1872, Arbitration Act 1940)`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		inputPath := args[0]
@@ -45,7 +46,7 @@ Jurisdiction (--jurisdiction / -j):
 
 		// --- Validate --jurisdiction flag (Phase 3) ---
 		if !codegen.IsValidJurisdiction(jurisdiction) {
-			return fmt.Errorf("unsupported jurisdiction %q; valid options: common, delaware, california, uk", jurisdiction)
+			return fmt.Errorf("unsupported jurisdiction %q; valid options: common, delaware, california, uk, pakistan", jurisdiction)
 		}
 
 		// --- Read source ---

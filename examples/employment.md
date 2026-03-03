@@ -44,13 +44,13 @@ set forth below:
 - **"Contract Expiry"** means April 1, 2028 (2028-04-01).
 
 Any term not defined herein shall be given its ordinary meaning under
-applicable Common Law law.
+applicable common law.
 
 ---
 
 ## 3. Obligations and Performance
 
-### 3. Probation
+### 3.1 Probation
 
 **Phase:** Probation
 
@@ -70,7 +70,7 @@ In the event of a material breach by **Employee**, this Agreement shall immediat
 
 Upon the expiration of the **Probation Period** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Probation Expired** phase.
 
-### 3. Active
+### 3.2 Active
 
 **Phase:** Active
 
@@ -95,7 +95,7 @@ In the event of a material breach by **Employer**, this Agreement shall immediat
 
 Upon the expiration of the **Contract Term** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Contract Expired** phase.
 
-### 3. Notice Period
+### 3.3 Notice Period
 
 **Phase:** Notice Period
 

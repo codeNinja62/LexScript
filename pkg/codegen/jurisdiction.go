@@ -23,6 +23,10 @@ type JurisdictionData struct {
 	// DisplayName is the human-readable name shown in the document (e.g. "State of Delaware").
 	DisplayName string
 
+	// LegalSystemName is used in the §2 Definitions catchall sentence,
+	// e.g. "the laws of the State of Delaware" or "common law".
+	LegalSystemName string
+
 	// GoverningLawLine is the short line printed at the top of the document,
 	// e.g. "State of Delaware".
 	GoverningLawLine string
@@ -54,6 +58,7 @@ var validJurisdictions = map[string]bool{
 	"delaware":   true,
 	"california": true,
 	"uk":         true,
+	"pakistan":   true,
 }
 
 // IsValidJurisdiction returns true if code is a supported jurisdiction.
@@ -71,6 +76,8 @@ func GetJurisdiction(code string) JurisdictionData {
 		return jurisdictionCalifornia
 	case "uk":
 		return jurisdictionUK
+	case "pakistan":
+		return jurisdictionPakistan
 	default:
 		return jurisdictionCommon
 	}
@@ -83,6 +90,7 @@ func GetJurisdiction(code string) JurisdictionData {
 var jurisdictionCommon = JurisdictionData{
 	Code:             "common",
 	DisplayName:      "Common Law",
+	LegalSystemName:  "applicable common law",
 	GoverningLawLine: "Common Law",
 	GoverningClause: "governed by and construed in accordance with applicable common law " +
 		"principles, without reference to any specific jurisdiction's conflict of laws rules",
@@ -101,6 +109,7 @@ var jurisdictionCommon = JurisdictionData{
 var jurisdictionDelaware = JurisdictionData{
 	Code:             "delaware",
 	DisplayName:      "State of Delaware",
+	LegalSystemName:  "the laws of the State of Delaware",
 	GoverningLawLine: "State of Delaware",
 	GoverningClause: "governed by and construed in accordance with the laws of the State of " +
 		"Delaware, excluding its conflict of laws provisions",
@@ -130,6 +139,7 @@ var jurisdictionDelaware = JurisdictionData{
 var jurisdictionCalifornia = JurisdictionData{
 	Code:             "california",
 	DisplayName:      "State of California",
+	LegalSystemName:  "the laws of the State of California",
 	GoverningLawLine: "State of California",
 	GoverningClause: "governed by and construed in accordance with the laws of the State of " +
 		"California, excluding its conflict of laws provisions",
@@ -165,6 +175,7 @@ var jurisdictionCalifornia = JurisdictionData{
 var jurisdictionUK = JurisdictionData{
 	Code:             "uk",
 	DisplayName:      "England and Wales",
+	LegalSystemName:  "the laws of England and Wales",
 	GoverningLawLine: "England and Wales",
 	GoverningClause:  "governed by and construed in accordance with the laws of England and Wales",
 	DisputeResolutionClause: "Any dispute, controversy, or claim arising out of or relating to this " +
@@ -194,6 +205,47 @@ var jurisdictionUK = JurisdictionData{
 				"negotiations, and discussions, whether oral or written, between the parties. " +
 				"Each party acknowledges that, in entering into this Agreement, it has not " +
 				"relied on any representation or warranty not expressly set out in this Agreement.",
+		},
+	},
+}
+
+var jurisdictionPakistan = JurisdictionData{
+	Code:             "pakistan",
+	DisplayName:      "Pakistan",
+	LegalSystemName:  "the laws of Pakistan",
+	GoverningLawLine: "Pakistan",
+	GoverningClause: "governed by and construed in accordance with the laws of Pakistan, " +
+		"including the Contract Act, 1872, and all other applicable legislation of Pakistan, " +
+		"excluding any conflict of laws provisions",
+	DisputeResolutionClause: "Any dispute, controversy, or claim arising out of or relating to this " +
+		"Agreement, or the breach, termination, or invalidity thereof, shall first be " +
+		"referred to good-faith negotiation between senior representatives of the parties. " +
+		"If unresolved within thirty (30) days, the dispute shall be submitted to binding " +
+		"arbitration in accordance with the Arbitration Act, 1940 (as amended) of Pakistan, " +
+		"with the seat of arbitration in Karachi or such other city as the parties may " +
+		"mutually agree. The language of the arbitration shall be English. Judgment on the " +
+		"arbitral award may be enforced in any court of competent jurisdiction in Pakistan.",
+	SeverabilityClause: "If any provision of this Agreement is held by a court of competent " +
+		"jurisdiction to be invalid, illegal, or unenforceable under the laws of Pakistan, " +
+		"the remaining provisions shall continue in full force and effect. The parties " +
+		"further agree that any such provision shall be modified to the minimum extent " +
+		"necessary to render it enforceable in accordance with Pakistani law.",
+	AdditionalProvisions: []JurisdictionProvision{
+		{
+			Heading: "Contract Act, 1872",
+			Body: "The parties acknowledge that this Agreement is subject to the provisions of " +
+				"the Contract Act, 1872, as applicable in Pakistan, including the requirements " +
+				"of free consent, lawful consideration, and lawful object. Any provision of " +
+				"this Agreement found to be contrary to the mandatory provisions of the " +
+				"Contract Act, 1872 shall be void to that extent only.",
+		},
+		{
+			Heading: "Stamp Duty",
+			Body: "The parties shall be responsible for paying all applicable stamp duty on " +
+				"this Agreement as required under the Stamp Act, 1899 (as applicable in the " +
+				"relevant province of Pakistan). Failure to pay stamp duty shall not affect " +
+				"the validity of this Agreement between the parties but may affect its " +
+				"admissibility in evidence before a Pakistani court.",
 		},
 	},
 }

@@ -459,6 +459,7 @@ lexs compile <input.lxs> [-f md|pdf] [-j common|delaware|california|uk] [-o <out
 | `delaware` | State of Delaware | Delaware Court of Chancery / Superior Court |
 | `california` | State of California | JAMS arbitration (mediation first) |
 | `uk` | England and Wales | LCIA arbitration, London seat |
+| `pakistan` | Pakistan (Contract Act 1872) | Arbitration Act 1940 / Karachi seat |
 
 **Exit codes:** `0` = success · `1` = compilation error (full error list printed to stderr)
 
@@ -716,7 +717,7 @@ The PDF backend (`pdf_emitter.go`) reuses the same `ContractData` model and rend
 
 ### ✓ Phase 3 — Completed
 
-- **Jurisdiction variants:** `--jurisdiction common|delaware|california|uk` selects a jurisdiction-specific boilerplate clause library per REQ-3.2. Each jurisdiction provides a distinct governing law statement, severability clause, dispute resolution section (§7), and any additional jurisdiction-specific provisions in §5.
+- **Jurisdiction variants:** `--jurisdiction common|delaware|california|uk|pakistan` selects a jurisdiction-specific boilerplate clause library per REQ-3.2. Each jurisdiction provides a distinct governing law statement, severability clause, dispute resolution section (§7), and any additional jurisdiction-specific provisions in §5.
 - **`date` primitive:** New `date <name> = YYYY-MM-DD;` top-level declaration. Dates are validated as real ISO 8601 calendar dates by the semantic pass and appear in §2 Definitions with human-readable display (e.g., *April 1, 2026*).
 - **CPI-adjusted amounts:** Optional `cpi_adjusted` modifier on any `amount` declaration generates an annual Consumer Price Index adjustment clause in §2 Definitions.
 
