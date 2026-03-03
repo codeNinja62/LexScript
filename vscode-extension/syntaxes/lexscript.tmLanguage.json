@@ -1,0 +1,169 @@
+{
+  "$schema": "https://raw.githubusercontent.com/martinring/tmlanguage/master/tmlanguage.json",
+  "name": "LexScript",
+  "scopeName": "source.lexscript",
+  "fileTypes": ["lxs"],
+  "patterns": [
+    { "include": "#comments" },
+    { "include": "#contract-block" },
+    { "include": "#keywords" },
+    { "include": "#forbidden-keywords" },
+    { "include": "#state-keywords" },
+    { "include": "#terminal-kinds" },
+    { "include": "#action-verbs" },
+    { "include": "#currencies" },
+    { "include": "#time-units" },
+    { "include": "#date-literal" },
+    { "include": "#float-literal" },
+    { "include": "#int-literal" },
+    { "include": "#arrow" },
+    { "include": "#identifiers" },
+    { "include": "#punctuation" }
+  ],
+  "repository": {
+    "comments": {
+      "patterns": [
+        {
+          "name": "comment.line.double-slash.lexscript",
+          "match": "//.*$"
+        }
+      ]
+    },
+    "contract-block": {
+      "begin": "\\b(contract)\\b\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+      "beginCaptures": {
+        "1": { "name": "keyword.declaration.contract.lexscript" },
+        "2": { "name": "entity.name.type.contract.lexscript" }
+      },
+      "end": "(?=\\{)",
+      "patterns": []
+    },
+    "keywords": {
+      "patterns": [
+        {
+          "name": "keyword.declaration.lexscript",
+          "match": "\\b(party|amount|time_limit|date|state|contract)\\b"
+        },
+        {
+          "name": "keyword.control.lexscript",
+          "match": "\\b(require|transition|terminate)\\b"
+        },
+        {
+          "name": "keyword.modifier.lexscript",
+          "match": "\\b(cpi_adjusted)\\b"
+        }
+      ]
+    },
+    "forbidden-keywords": {
+      "patterns": [
+        {
+          "name": "invalid.illegal.forbidden-keyword.lexscript",
+          "match": "\\b(while|for|loop|goto|repeat|until|do|foreach|recurse)\\b"
+        }
+      ]
+    },
+    "state-keywords": {
+      "patterns": [
+        {
+          "match": "\\b(state)\\b\\s+([a-zA-Z_][a-zA-Z0-9_]*)",
+          "captures": {
+            "1": { "name": "keyword.declaration.state.lexscript" },
+            "2": { "name": "entity.name.type.state.lexscript" }
+          }
+        }
+      ]
+    },
+    "terminal-kinds": {
+      "patterns": [
+        {
+          "name": "constant.language.terminal-kind.lexscript",
+          "match": "\\b(fulfilled|breached|expired)\\b"
+        }
+      ]
+    },
+    "action-verbs": {
+      "patterns": [
+        {
+          "name": "support.function.verb.lexscript",
+          "match": "\\b(pays|provides|delivers|signs|returns|transfers|notifies)\\b"
+        }
+      ]
+    },
+    "currencies": {
+      "patterns": [
+        {
+          "name": "constant.language.currency.lexscript",
+          "match": "\\b(USD|EUR|GBP|JPY|CAD|AUD|CHF)\\b"
+        }
+      ]
+    },
+    "time-units": {
+      "patterns": [
+        {
+          "name": "constant.language.time-unit.lexscript",
+          "match": "\\b(days|months|years|business_days|hours|weeks)\\b"
+        }
+      ]
+    },
+    "date-literal": {
+      "patterns": [
+        {
+          "name": "constant.other.date.lexscript",
+          "match": "\\b[0-9]{4}-[0-9]{2}-[0-9]{2}\\b"
+        }
+      ]
+    },
+    "float-literal": {
+      "patterns": [
+        {
+          "name": "constant.numeric.float.lexscript",
+          "match": "\\b[0-9]+\\.[0-9]+\\b"
+        }
+      ]
+    },
+    "int-literal": {
+      "patterns": [
+        {
+          "name": "constant.numeric.integer.lexscript",
+          "match": "\\b[0-9]+\\b"
+        }
+      ]
+    },
+    "arrow": {
+      "patterns": [
+        {
+          "name": "keyword.operator.arrow.lexscript",
+          "match": "->"
+        }
+      ]
+    },
+    "identifiers": {
+      "patterns": [
+        {
+          "name": "variable.other.lexscript",
+          "match": "\\b[a-zA-Z_][a-zA-Z0-9_]*\\b"
+        }
+      ]
+    },
+    "punctuation": {
+      "patterns": [
+        {
+          "name": "punctuation.definition.block.lexscript",
+          "match": "[{}]"
+        },
+        {
+          "name": "punctuation.definition.parameters.lexscript",
+          "match": "[()]"
+        },
+        {
+          "name": "punctuation.terminator.statement.lexscript",
+          "match": ";"
+        },
+        {
+          "name": "punctuation.separator.lexscript",
+          "match": "="
+        }
+      ]
+    }
+  }
+}

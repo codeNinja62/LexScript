@@ -1,0 +1,89 @@
+{
+  "name": "lexscript",
+  "displayName": "LexScript",
+  "description": "Language support for LexScript (.lxs) — syntax highlighting, diagnostics, hover, completion, go-to-definition, and FSM preview.",
+  "version": "0.4.0",
+  "publisher": "lexscript",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "Programming Languages"
+  ],
+  "activationEvents": [
+    "onLanguage:lexscript"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "languages": [
+      {
+        "id": "lexscript",
+        "aliases": [
+          "LexScript",
+          "lxs"
+        ],
+        "extensions": [
+          ".lxs"
+        ],
+        "configuration": "./language-configuration.json"
+      }
+    ],
+    "grammars": [
+      {
+        "language": "lexscript",
+        "scopeName": "source.lexscript",
+        "path": "./syntaxes/lexscript.tmLanguage.json"
+      }
+    ],
+    "commands": [
+      {
+        "command": "lexscript.showFsmPreview",
+        "title": "LexScript: Show FSM Preview",
+        "icon": "$(graph)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "when": "editorLangId == lexscript",
+          "command": "lexscript.showFsmPreview",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "LexScript",
+      "properties": {
+        "lexscript.serverPath": {
+          "type": "string",
+          "default": "lexs",
+          "description": "Path to the lexs binary. If on PATH, just 'lexs' suffices."
+        },
+        "lexscript.trace.server": {
+          "type": "string",
+          "enum": [
+            "off",
+            "messages",
+            "verbose"
+          ],
+          "default": "off",
+          "description": "Trace communication between VS Code and the LSP server."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "lint": "eslint src --ext ts"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "vscode-languageclient": "^9.0.1"
+  }
+}

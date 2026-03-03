@@ -41,13 +41,13 @@ set forth below:
 
 
 Any term not defined herein shall be given its ordinary meaning under
-applicable Common Law law.
+applicable common law.
 
 ---
 
 ## 3. Obligations and Performance
 
-### 3. Awaiting Kickoff
+### 3.1 Awaiting Kickoff
 
 **Phase:** Awaiting Kickoff
 
@@ -65,7 +65,7 @@ Upon the occurrence of **Kickoff Complete**, this Agreement shall transition to 
 
 Upon the expiration of the **Delivery Window** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Expired** phase.
 
-### 3. Development
+### 3.2 Development
 
 **Phase:** Development
 
@@ -85,7 +85,7 @@ In the event of a material breach by **Developer**, this Agreement shall immedia
 
 Upon the expiration of the **Delivery Window** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Expired** phase.
 
-### 3. Review
+### 3.3 Review
 
 **Phase:** Review
 
@@ -105,7 +105,7 @@ In the event of a material breach by **Client**, this Agreement shall immediatel
 
 Upon the expiration of the **Review Period** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Expired** phase.
 
-### 3. Awaiting Final Payment
+### 3.4 Awaiting Final Payment
 
 **Phase:** Awaiting Final Payment
 

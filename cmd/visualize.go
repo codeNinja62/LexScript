@@ -2,6 +2,7 @@ package cmd
 
 import (
 	"fmt"
+	"io"
 	"os"
 	"strings"
 
@@ -11,7 +12,10 @@ import (
 	"github.com/spf13/cobra"
 )
 
-var visualizeOutputPath string
+var (
+	visualizeOutputPath string
+	visualizeStdin      bool
+)
 
 var visualizeCmd = &cobra.Command{
 	Use:   "visualize <input.lxs>",
@@ -23,6 +27,8 @@ The .dot file can be rendered with the Graphviz toolchain (https://graphviz.org)
 
   dot -Tpng contract.dot -o contract.png
   dot -Tsvg contract.dot -o contract.svg
+
+Use --stdin to read the .lxs source from standard input (used by IDE integrations).
 
 Node legend:
   ┌──────────────┐  Non-terminal state (box, rounded)
@@ -36,14 +42,28 @@ Edge labels show the transition trigger:
   • Named event    — e.g. "Payment Received"
   • time_limit(x)  — triggers when duration x elapses
   • breach(Party)  — triggers on material breach by Party`,
-	Args: cobra.ExactArgs(1),
+	Args: cobra.MaximumNArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
-		inputPath := args[0]
+		var src []byte
+		var inputPath string
+		var err error
 
-		// --- Read source ---
-		src, err := os.ReadFile(inputPath)
-		if err != nil {
-			return fmt.Errorf("reading %s: %w", inputPath, err)
+		if visualizeStdin {
+			// Read from stdin (used by the VS Code FSM preview).
+			src, err = io.ReadAll(os.Stdin)
+			if err != nil {
+				return fmt.Errorf("reading stdin: %w", err)
+			}
+			inputPath = "stdin.lxs"
+		} else {
+			if len(args) == 0 {
+				return fmt.Errorf("provide an input file or use --stdin")
+			}
+			inputPath = args[0]
+			src, err = os.ReadFile(inputPath)
+			if err != nil {
+				return fmt.Errorf("reading %s: %w", inputPath, err)
+			}
 		}
 
 		// --- Parse ---
@@ -53,13 +73,20 @@ Edge labels show the transition trigger:
 		}
 
 		// --- Determine output path ---
+		dot := visualize.DOT(contract)
+
+		// If reading from stdin and no -o flag, write DOT to stdout.
+		if visualizeStdin && visualizeOutputPath == "" {
+			fmt.Print(dot)
+			return nil
+		}
+
 		out := visualizeOutputPath
 		if out == "" {
 			out = strings.TrimSuffix(inputPath, ".lxs") + ".dot"
 		}
 
 		// --- Emit DOT ---
-		dot := visualize.DOT(contract)
 		if err := os.WriteFile(out, []byte(dot), 0644); err != nil {
 			return fmt.Errorf("writing DOT file %s: %w", out, err)
 		}
@@ -74,5 +101,7 @@ Edge labels show the transition trigger:
 func init() {
 	visualizeCmd.Flags().StringVarP(&visualizeOutputPath, "output", "o", "",
 		"output path (default: replaces .lxs with .dot)")
+	visualizeCmd.Flags().BoolVar(&visualizeStdin, "stdin", false,
+		"read .lxs source from stdin instead of a file argument")
 	rootCmd.AddCommand(visualizeCmd)
 }

@@ -21,6 +21,8 @@
 | Backend — PDF codegen | `pkg/codegen` | `pkg/codegen/pdf_emitter.go` |
 | Formatter | `pkg/format` | `pkg/format/format.go` |
 | DOT visualizer | `pkg/visualize` | `pkg/visualize/visualize.go` |
+| LSP server (Phase 4) | `pkg/lsp` | `pkg/lsp/server.go` |
+| Web playground (Phase 4) | `pkg/playground` | `pkg/playground/server.go` |
 
 ## SRS Requirement Index
 
@@ -102,8 +104,12 @@ make validate-rental        # semantic check only (no output file)
 ./bin/lexs fmt    examples/rental.lxs                     # print canonical source to stdout
 ./bin/lexs fmt -w examples/rental.lxs                     # overwrite in-place
 ./bin/lexs visualize examples/rental.lxs -o rental.dot    # Graphviz DOT export
+./bin/lexs visualize --stdin < rental.lxs                 # DOT via stdin → stdout (Phase 4)
 ./bin/lexs parse    examples/rental.lxs                   # JSON AST dump
 ./bin/lexs validate examples/rental.lxs                   # errors only, no output
+./bin/lexs lsp                                            # start LSP server (Phase 4)
+./bin/lexs serve                                          # start web playground (Phase 4)
+./bin/lexs serve -a :3000                                 # playground on custom port
 ```
 
 ## DSL Key Facts
@@ -120,16 +126,14 @@ make validate-rental        # semantic check only (no output file)
 ## Planned but Not Yet Implemented (Roadmap)
 
 Do not implement these without explicit instruction — they conflict with planned architecture decisions:
-- **VS Code extension + LSP:** Syntax highlighting and error squiggles for `.lxs` files.
 - **Date arithmetic expressions:** Date arithmetic within `require` / `transition` contexts (currently only top-level declarations are supported).
-- **Web playground:** Browser-based editor and live contract preview.
 
 ## Key Files Reference
 
 | Purpose | File |
 |---------|------|
 | Root entry point | `main.go` → `cmd/root.go` |
-| All CLI subcommands | `cmd/compile.go`, `cmd/parse.go`, `cmd/validate.go`, `cmd/fmt.go`, `cmd/visualize.go` |
+| All CLI subcommands | `cmd/compile.go`, `cmd/parse.go`, `cmd/validate.go`, `cmd/fmt.go`, `cmd/visualize.go`, `cmd/lsp.go`, `cmd/serve.go` |
 | AST node definitions + lexer | `pkg/ast/ast.go` |
 | Semantic validation (all passes) | `pkg/semantic/validate.go` |
 | Markdown code generation + data model | `pkg/codegen/emitter.go` |
@@ -138,5 +142,8 @@ Do not implement these without explicit instruction — they conflict with plann
 | Markdown output template | `pkg/codegen/templates/contract.md.tmpl` |
 | Source formatter (Phase 2) | `pkg/format/format.go` |
 | DOT visualizer (Phase 2) | `pkg/visualize/visualize.go` |
+| LSP server (Phase 4) | `pkg/lsp/server.go`, `pkg/lsp/diagnostics.go`, `pkg/lsp/hover.go`, `pkg/lsp/completion.go`, `pkg/lsp/definition.go` |
+| VS Code extension (Phase 4) | `vscode-extension/src/extension.ts`, `vscode-extension/src/client.ts`, `vscode-extension/src/fsmPreview.ts` |
+| Web playground (Phase 4) | `pkg/playground/server.go`, `pkg/playground/static/index.html`, `pkg/playground/static/app.js` |
 | Formal grammar (EBNF) | `grammar/grammar.ebnf` |
 | Example contracts | `examples/rental.lxs`, `examples/software_dev.lxs`, `examples/employment.lxs` |

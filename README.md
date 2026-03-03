@@ -171,6 +171,9 @@ The compiler produces `RentalAgreement.md` (or `.pdf`) — a formatted agreement
 | Template embedding | Go `//go:embed` directive — binary is fully self-contained |
 | Graph analysis | [`gonum/graph`](https://pkg.go.dev/gonum.org/v1/gonum/graph) — Tarjan SCC + BFS for cycle detection and reachability |
 | PDF backend | [`go-pdf/fpdf`](https://github.com/go-pdf/fpdf) — A4 PDF output with inline bold rendering |
+| LSP transport | [`sourcegraph/jsonrpc2`](https://github.com/sourcegraph/jsonrpc2) — JSON-RPC 2.0 over stdin/stdout |
+| VS Code extension | TypeScript + [`vscode-languageclient`](https://www.npmjs.com/package/vscode-languageclient) |
+| Web playground | Go `net/http` + embedded static files + [viz.js](https://github.com/nicknisi/viz.js) for FSM rendering |
 
 ### Compiler architecture (three-pass)
 
@@ -480,14 +483,43 @@ lexs fmt [--write] <input.lxs>
 Exports the contract's finite state machine as a Graphviz DOT file.
 
 ```
-lexs visualize <input.lxs> [-o <output.dot>]
+lexs visualize <input.lxs> [-o <output.dot>] [--stdin]
 ```
 
 | Flag | Default | Description |
 |---|---|---|
 | `-o`, `--output` | `<input>.dot` | Output path for the `.dot` file |
+| `--stdin` | false | Read `.lxs` source from stdin (used by IDE integrations) |
 
 Render with: `dot -Tpng output.dot -o output.png`
+
+### `lexs lsp`
+
+Starts the Language Server Protocol server over stdin/stdout. This is intended to be spawned by an editor extension (e.g. the VS Code LexScript extension), not run manually.
+
+```
+lexs lsp
+```
+
+**Capabilities:**
+- `textDocument/publishDiagnostics` — errors + warnings on every edit
+- `textDocument/hover` — keyword and symbol descriptions
+- `textDocument/completion` — keywords, declared names, currencies, time units
+- `textDocument/definition` — go-to-declaration for parties, amounts, states, dates
+
+### `lexs serve`
+
+Starts the web playground HTTP server.
+
+```
+lexs serve [-a <addr>]
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `-a`, `--addr` | `:8080` | Address to listen on (e.g. `:3000`) |
+
+Open `http://localhost:8080` in a browser to use the playground.
 
 ### `lexs validate`
 
@@ -617,7 +649,9 @@ project/
 │   ├── parse.go                     `lexs parse`      — AST JSON dump (debug)
 │   ├── validate.go                  `lexs validate`   — semantic checks only (debug/CI)
 │   ├── fmt.go                       `lexs fmt`        — canonical source formatter
-│   └── visualize.go                 `lexs visualize`  — Graphviz DOT export
+│   ├── visualize.go                 `lexs visualize`  — Graphviz DOT export
+│   ├── lsp.go                       `lexs lsp`        — start LSP server (Phase 4)
+│   └── serve.go                     `lexs serve`      — start web playground (Phase 4)
 │
 ├── pkg/
 │   ├── ast/
@@ -632,11 +666,37 @@ project/
 │   ├── visualize/
 │   │   └── visualize.go             Graphviz DOT emitter (state machine diagram)
 │   │
-│   └── codegen/
-│       ├── emitter.go               AST → ContractData model + text/template renderer
-│       ├── pdf_emitter.go           AST → PDF document via go-pdf/fpdf
-│       └── templates/
-│           └── contract.md.tmpl     Master Markdown template (embedded in binary)
+│   ├── codegen/
+│   │   ├── emitter.go               AST → ContractData model + text/template renderer
+│   │   ├── pdf_emitter.go           AST → PDF document via go-pdf/fpdf
+│   │   ├── jurisdiction.go          Jurisdiction-specific boilerplate clauses
+│   │   └── templates/
+│   │       └── contract.md.tmpl     Master Markdown template (embedded in binary)
+│   │
+│   ├── lsp/                         Language Server Protocol implementation (Phase 4)
+│   │   ├── protocol.go              LSP type definitions (self-contained, no framework)
+│   │   ├── server.go                JSON-RPC 2.0 server over stdin/stdout
+│   │   ├── diagnostics.go           Compiler pipeline → LSP Diagnostics bridge
+│   │   ├── hover.go                 textDocument/hover — keyword & symbol info
+│   │   ├── completion.go            textDocument/completion — keywords + declared names
+│   │   └── definition.go            textDocument/definition — go-to-declaration
+│   │
+│   └── playground/                  Web playground HTTP server (Phase 4)
+│       ├── server.go                HTTP API: /api/compile, /api/visualize
+│       └── static/
+│           ├── index.html           Single-page playground UI
+│           └── app.js               Client-side compilation & FSM rendering
+│
+├── vscode-extension/                VS Code extension (Phase 4)
+│   ├── package.json                 Extension manifest + language contribution
+│   ├── tsconfig.json                TypeScript configuration
+│   ├── language-configuration.json  Comment/bracket/folding rules
+│   ├── syntaxes/
+│   │   └── lexscript.tmLanguage.json  TextMate grammar for syntax highlighting
+│   └── src/
+│       ├── extension.ts             Extension entry point — activates LSP + commands
+│       ├── client.ts                LanguageClient — spawns `lexs lsp` over stdio
+│       └── fsmPreview.ts            Webview panel — live FSM graph rendering
 │
 ├── examples/
 │   ├── rental.lxs                   Residential rental agreement example
@@ -721,11 +781,11 @@ The PDF backend (`pdf_emitter.go`) reuses the same `ContractData` model and rend
 - **`date` primitive:** New `date <name> = YYYY-MM-DD;` top-level declaration. Dates are validated as real ISO 8601 calendar dates by the semantic pass and appear in §2 Definitions with human-readable display (e.g., *April 1, 2026*).
 - **CPI-adjusted amounts:** Optional `cpi_adjusted` modifier on any `amount` declaration generates an annual Consumer Price Index adjustment clause in §2 Definitions.
 
-### Phase 4 — Tooling (Next)
+### ✓ Phase 4 — Tooling — Completed
 
-- **VS Code extension:** Syntax highlighting, error squiggles, and FSM preview for `.lxs` files
-- **LSP server:** Language Server Protocol implementation for any editor
-- **Web playground:** Browser-based editor and live preview
+- **LSP server (`lexs lsp`):** Full Language Server Protocol implementation over stdin/stdout using `sourcegraph/jsonrpc2`. Provides real-time diagnostics (error squiggles on every keystroke), hover information (keyword/symbol descriptions), autocompletion (keywords, currencies, time units, declared names), and go-to-definition (jump to party/amount/state/date declarations). Works with any LSP-compatible editor.
+- **VS Code extension (`vscode-extension/`):** First-class IDE experience for `.lxs` files — TextMate grammar for syntax highlighting (keywords, currencies, time units, forbidden keywords, dates, numbers, comments), language configuration (bracket matching, folding, indentation), and an FSM Preview command that renders the contract's state machine as an interactive graph in a side panel. The extension spawns `lexs lsp` automatically for diagnostics, hover, completion, and go-to-definition.
+- **Web playground (`lexs serve`):** Browser-based editor at `http://localhost:8080` with a split-pane UI — code editor on the left, Markdown output or FSM graph on the right. Supports jurisdiction selection (common/delaware/california/uk), real-time error diagnostics, and FSM visualization via viz.js. All static assets are embedded in the binary via `//go:embed`.
 
 ---
 
@@ -745,4 +805,4 @@ The PDF backend (`pdf_emitter.go`) reuses the same `ContractData` model and rend
 
 ---
 
-*LexScript v0.3 — Compiler Construction Project, Semester 6*
+*LexScript v0.4 — Compiler Construction Project, Semester 6*

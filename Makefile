@@ -11,7 +11,8 @@ SRC       := $(shell find . -name '*.go' -not -path './vendor/*')
         fmt-rental fmt-software visualize-rental visualize-software \
         compile-employment compile-employment-pdf \
         compile-employment-de compile-employment-ca compile-employment-uk \
-        validate-employment
+        validate-employment \
+        lsp playground extension-install extension-build
 
 ## ── Default ─────────────────────────────────────────────────────────────────
 
@@ -82,6 +83,23 @@ compile-employment-uk: build                 ## employment.lxs → MD with UK ju
 
 validate-employment: build                   ## Validate examples/employment.lxs (Phase 3)
 	./$(BUILD_DIR)/$(BINARY) validate examples/employment.lxs
+
+## ── Phase 4 commands ─────────────────────────────────────────────────────────
+
+lsp: build                                   ## Start the LSP server over stdin/stdout (Phase 4)
+	./$(BUILD_DIR)/$(BINARY) lsp
+
+playground: build                            ## Start web playground on http://localhost:8080 (Phase 4)
+	./$(BUILD_DIR)/$(BINARY) serve
+
+playground-port: build                       ## Start playground on custom port, e.g. make playground-port PORT=3000
+	./$(BUILD_DIR)/$(BINARY) serve -a :$(PORT)
+
+extension-install:                           ## Install VS Code extension npm deps (Phase 4)
+	cd vscode-extension && npm install
+
+extension-build: extension-install           ## Build VS Code extension (Phase 4)
+	cd vscode-extension && npm run compile
 
 ## ── Testing ─────────────────────────────────────────────────────────────────
 

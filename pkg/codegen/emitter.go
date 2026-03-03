@@ -157,6 +157,16 @@ func (e *Emitter) Emit(c *ast.Contract, outPath string, jurisdiction string) err
 	return nil
 }
 
+// EmitString renders the contract to a Markdown string (used by the web playground).
+func (e *Emitter) EmitString(c *ast.Contract, jurisdiction string) (string, error) {
+	data := e.buildData(c, jurisdiction)
+	var buf strings.Builder
+	if err := e.tmpl.Execute(&buf, data); err != nil {
+		return "", fmt.Errorf("executing template: %w", err)
+	}
+	return buf.String(), nil
+}
+
 // ---------------------------------------------------------------------------
 // AST → Data Model conversion
 // ---------------------------------------------------------------------------
