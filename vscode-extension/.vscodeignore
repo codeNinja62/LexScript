@@ -6,7 +6,7 @@ tsconfig.json
 .gitignore
 *.map
 
-# Dev tooling
-node_modules/
+# Dev tooling (node_modules is intentionally NOT excluded so vsce bundles
+# production deps like vscode-languageclient into the VSIX)
 .vscode-test/
 *.vsix
