@@ -28,7 +28,7 @@
 
 Think of it like a **spreadsheet formula for contracts**: instead of a lawyer typing out lengthy paragraphs describing what happens when Party A doesn't pay, you write the rule once in a compact, unambiguous form, and the tool generates the full legal language for you — identically, every time.
 
-**The output is a standard Markdown (`.md`) document** — the same format used for documentation across the software industry, which any word processor, PDF converter, or legal drafting tool can render and print.
+**The output is a standard Markdown (`.md`) document** or a formatted **PDF (`.pdf`)** — both produced from the same fixed templates. Any word processor, PDF viewer, or legal drafting tool can open them.
 
 **No artificial intelligence is involved.** Every word in the output was written by a human legal drafter and is stored as a fixed template. The compiler simply matches your contract logic to the right template and fills in the blanks. This means:
 
@@ -129,15 +129,21 @@ Reading this requires no technical knowledge. Each line has a direct plain-langu
 
 ### Step 2: Run the compiler
 
-One command:
+One command (Markdown output, the default):
 
 ```
 lexs compile RentalAgreement.lxs
 ```
 
+Or generate a PDF directly:
+
+```
+lexs compile RentalAgreement.lxs -f pdf
+```
+
 ### Step 3: Receive a complete legal document
 
-The compiler produces `RentalAgreement.md` — a formatted agreement containing:
+The compiler produces `RentalAgreement.md` (or `.pdf`) — a formatted agreement containing:
 
 - Title, date, and governing law statement
 - Party identification block
@@ -163,6 +169,8 @@ The compiler produces `RentalAgreement.md` — a formatted agreement containing:
 | CLI framework | [`cobra`](https://github.com/spf13/cobra) |
 | Template engine | Go standard library `text/template` |
 | Template embedding | Go `//go:embed` directive — binary is fully self-contained |
+| Graph analysis | [`gonum/graph`](https://pkg.go.dev/gonum.org/v1/gonum/graph) — Tarjan SCC + BFS for cycle detection and reachability |
+| PDF backend | [`go-pdf/fpdf`](https://github.com/go-pdf/fpdf) — A4 PDF output with inline bold rendering |
 
 ### Compiler architecture (three-pass)
 
@@ -184,7 +192,7 @@ The compiler produces `RentalAgreement.md` — a formatted agreement containing:
 │  Pass 2: Type checking          │  currency codes, durations (REQ-2.3)
 │  Pass 3: Reference resolution   │  all names must be declared
 │  Pass 4: State body completeness│  no dead-end states (REQ-2.2)
-│  Pass 5: Reachability (BFS)     │  unreachable states flagged (REQ-2.1)
+│  Pass 5: Tarjan SCC + BFS       │  cycle detection + reachability (REQ-2.1)
 └────────────────┬────────────────┘
                  │
                  ▼
@@ -192,11 +200,11 @@ The compiler produces `RentalAgreement.md` — a formatted agreement containing:
 │  BACKEND (pkg/codegen)          │
 │  AST → ContractData model       │
 │  text/template render           │  deterministic, no AI (REQ-3.1)
-│  Write .md output               │
+│  Write .md / .pdf output        │
 └────────────────┬────────────────┘
                  │
                  ▼
-  Output (.md)
+  Output (.md or .pdf)
 ```
 
 ### AST node hierarchy
@@ -264,17 +272,37 @@ go build -o bin\lexs.exe .
 ### Compile your first contract
 
 ```bash
-# Compile the included rental example
+# Compile the included rental example (Markdown)
 ./bin/lexs compile examples/rental.lxs
-
 # Output: examples/rental.md
+
+# Compile to PDF
+./bin/lexs compile examples/rental.lxs -f pdf
+# Output: examples/rental.pdf
+```
+
+### Format a contract source file
+
+```bash
+# Print canonical formatting to stdout
+./bin/lexs fmt examples/rental.lxs
+
+# Overwrite in-place
+./bin/lexs fmt --write examples/rental.lxs
+```
+
+### Export the state machine diagram
+
+```bash
+./bin/lexs visualize examples/rental.lxs -o examples/rental.dot
+# Render with Graphviz: dot -Tpng examples/rental.dot -o examples/rental.png
 ```
 
 ### Verify a contract without generating output
 
 ```bash
 ./bin/lexs validate examples/rental.lxs
-# ✓  examples/rental.lexscript: no errors
+# ✓  examples/rental.lxs: no errors
 ```
 
 ### Inspect the parsed AST (developer tool)
@@ -387,14 +415,41 @@ lexs <command> [flags] <input.lxs>
 Runs the full pipeline: parse → validate → generate.
 
 ```
-lexs compile <input.lxs> [-o <output.md>]
+lexs compile <input.lxs> [-f md|pdf] [-o <output>]
 ```
 
 | Flag | Default | Description |
 |---|---|---|
-| `-o`, `--output` | `<input>.md` (same directory) | Path for the generated Markdown file |
+| `-f`, `--format` | `md` | Output format: `md` (Markdown) or `pdf` |
+| `-o`, `--output` | `<input>.md` or `<input>.pdf` | Explicit output path |
 
 **Exit codes:** `0` = success · `1` = compilation error (full error list printed to stderr)
+
+### `lexs fmt`
+
+Pretty-prints a `.lxs` source file in canonical style. By default writes to stdout; use `--write` to overwrite in-place.
+
+```
+lexs fmt [--write] <input.lxs>
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `-w`, `--write` | false | Overwrite the source file in-place |
+
+### `lexs visualize`
+
+Exports the contract's finite state machine as a Graphviz DOT file.
+
+```
+lexs visualize <input.lxs> [-o <output.dot>]
+```
+
+| Flag | Default | Description |
+|---|---|---|
+| `-o`, `--output` | `<input>.dot` | Output path for the `.dot` file |
+
+Render with: `dot -Tpng output.dot -o output.png`
 
 ### `lexs validate`
 
@@ -476,12 +531,21 @@ error: 22:5: state "Limbo" is a dead end: has no terminate statement and no tran
 all execution paths must eventually reach a terminate node (REQ-2.2)
 ```
 
-### Pass 5 — Reachability (BFS from initial state) (REQ-2.1)
+### Pass 5 — Cycle detection (Tarjan SCC) + Reachability (REQ-2.1)
 
-The compiler performs a Breadth-First Search from the first declared state. Any state that cannot be reached from the starting point is reported.
+Pass 5 builds a directed graph of all states using `gonum/graph`. It then runs two analyses:
+
+**Tarjan's Strongly Connected Components** to detect deadlock cycles — groups of states that can never reach a `terminate` node:
 
 ```
-error: 35:5: state "GhostState" is unreachable from the initial state "AwaitingPayment" (REQ-2.1/2.2)
+error: 4:5: states [A B] form a deadlock cycle; no execution path from this
+group can reach a terminate node (REQ-2.1 — Tarjan SCC cycle detection)
+```
+
+**Breadth-First Search** from the first declared state to flag unreachable states:
+
+```
+error: 35:5: state "GhostState" is unreachable from the initial state "AwaitingPayment" (REQ-2.1)
 ```
 
 ---
@@ -501,9 +565,11 @@ project/
 │
 ├── cmd/                             CLI layer (Cobra) — no business logic here
 │   ├── root.go                      Root command and Execute() entry point
-│   ├── compile.go                   `lexscript compile` — full pipeline + forbidden-kw scan
-│   ├── parse.go                     `lexscript parse`   — AST JSON dump (debug)
-│   └── validate.go                  `lexscript validate` — semantic checks only (debug/CI)
+│   ├── compile.go                   `lexs compile` — full pipeline + forbidden-kw scan
+│   ├── parse.go                     `lexs parse`      — AST JSON dump (debug)
+│   ├── validate.go                  `lexs validate`   — semantic checks only (debug/CI)
+│   ├── fmt.go                       `lexs fmt`        — canonical source formatter
+│   └── visualize.go                 `lexs visualize`  — Graphviz DOT export
 │
 ├── pkg/
 │   ├── ast/
@@ -512,19 +578,30 @@ project/
 │   ├── semantic/
 │   │   └── validate.go              5-pass semantic validator (all errors accumulated)
 │   │
+│   ├── format/
+│   │   └── format.go                AST pretty-printer (canonical .lxs formatting)
+│   │
+│   ├── visualize/
+│   │   └── visualize.go             Graphviz DOT emitter (state machine diagram)
+│   │
 │   └── codegen/
 │       ├── emitter.go               AST → ContractData model + text/template renderer
+│       ├── pdf_emitter.go           AST → PDF document via go-pdf/fpdf
 │       └── templates/
 │           └── contract.md.tmpl     Master Markdown template (embedded in binary)
 │
 ├── examples/
 │   ├── rental.lxs                   Residential rental agreement example
-│   ├── rental.md                    Compiled output (auto-generated)
+│   ├── rental.md                    Compiled Markdown output
+│   ├── rental.pdf                   Compiled PDF output
+│   ├── rental.dot                   Graphviz DOT state machine
 │   ├── software_dev.lxs             Software development agreement example
-│   └── software_dev.md              Compiled output (auto-generated)
+│   ├── software_dev.md              Compiled Markdown output
+│   ├── software_dev.pdf             Compiled PDF output
+│   └── software_dev.dot             Graphviz DOT state machine
 │
 └── bin/
-    └── lexs  (or lexs.exe on Windows) Compiled binary
+    └── lexs  (or lexs.exe on Windows) Compiled binary (git-ignored)
 ```
 
 ---
@@ -553,7 +630,9 @@ The parser is built with `UseLookahead(2)`, which enables unambiguous selection 
 
 Validation errors carry source positions from `participle`'s `lexer.Position` (filename + line + column). All five passes run regardless of earlier failures — the programmer sees the complete error list in one compilation attempt.
 
-The reachability pass uses a manual BFS (adjacency-list walk over the `[]*Declaration` slice) rather than an external graph library. This keeps the dependency footprint minimal for the MVP. The production roadmap upgrades this to `gonum/graph` with Tarjan's SCC algorithm for full cycle detection.
+Pass 5 builds a `gonum/graph/simple.DirectedGraph` from the state transition graph, then runs two analyses:
+- **`topo.TarjanSCC`** — detects deadlock cycles (SCCs with more than one node, or single-node SCCs with a self-loop). A cycle means a group of states can never reach a `terminate` node.
+- **`traverse.BreadthFirst`** — BFS from the first declared state flags any state not reachable from the contract's entry point.
 
 ### Backend: `pkg/codegen`
 
@@ -575,18 +654,20 @@ AST-to-legal-text mappings:
 
 The template also injects boilerplate §5–§7 sections (General Provisions, Representations & Warranties, Signatures) that are jurisdiction-agnostic and constant across all contracts.
 
+The PDF backend (`pdf_emitter.go`) reuses the same `ContractData` model and renders it using `go-pdf/fpdf` with A4 layout, inline bold text via mixed-font `Write()` calls, and Windows-1252 bullet characters. Both backends produce identical clause content — only the presentation format differs.
+
 ---
 
 ## 12. Roadmap
 
-### Phase 2 — Production Hardening (Next)
+### ✓ Phase 2 — Completed
 
-- **Graph-based cycle detection:** Replace BFS with `gonum/graph` + Tarjan's SCC algorithm to detect deadlock cycles (not just dead ends) — REQ-2.1 full implementation
-- **PDF output:** Add `go-pdf/fpdf` backend; add `-f pdf` flag to `compile` command
-- **`lexscript fmt`:** Auto-formatter for `.lexscript` source files
-- **`lexscript visualize`:** Emit a Graphviz `.dot` file of the state machine diagram
+- **Graph-based cycle detection:** `gonum/graph` + Tarjan's SCC replaces BFS for full deadlock cycle detection — REQ-2.1 full implementation
+- **PDF output:** `go-pdf/fpdf` backend; `-f pdf` flag on `compile` command
+- **`lexs fmt`:** Canonical auto-formatter for `.lxs` source files
+- **`lexs visualize`:** Graphviz `.dot` state machine export with colour-coded terminal nodes
 
-### Phase 3 — Legal Extensibility
+### Phase 3 — Legal Extensibility (Next)
 
 - **Jurisdiction variants:** `--jurisdiction delaware|california|uk|common` selects the correct boilerplate library per REQ-3.2
 - **Lawyer-vetted clause library:** Replace draft templates with attorney-reviewed text for each jurisdiction
@@ -595,7 +676,7 @@ The template also injects boilerplate §5–§7 sections (General Provisions, Re
 
 ### Phase 4 — Tooling
 
-- **VS Code extension:** Syntax highlighting, error squiggles, and FSM preview for `.lexscript` files
+- **VS Code extension:** Syntax highlighting, error squiggles, and FSM preview for `.lxs` files
 - **LSP server:** Language Server Protocol implementation for any editor
 - **Web playground:** Browser-based editor and live preview
 
@@ -612,7 +693,9 @@ The template also injects boilerplate §5–§7 sections (General Provisions, Re
 | **Errors are accumulated, not short-circuited** | A compiler that stops at the first error is frustrating. All five semantic passes run; the programmer sees every problem in one go. |
 | **Template embedded with `//go:embed`** | The binary is self-contained. No runtime file path resolution required. Deployment is a single executable. |
 | **Go as host language** | Strong typing for AST structs, excellent compilation speed, single-binary deployment, first-class support in `participle/v2`. |
+| **`gonum/graph` for cycle detection** | Tarjan's SCC via a well-tested graph library is safer than a hand-rolled DFS. The directed-graph model also makes the BFS reachability pass a natural extension. |
+| **`go-pdf/fpdf` for PDF output** | Pure-Go, zero CGO, no external binary dependencies. Core font WinAnsi encoding is handled by using correct byte values for bullet characters rather than UTF-8. |
 
 ---
 
-*LexScript v0.1 — Compiler Construction Project, Semester 6*
+*LexScript v0.2 — Compiler Construction Project, Semester 6*
