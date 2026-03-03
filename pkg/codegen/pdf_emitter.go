@@ -53,10 +53,13 @@ func NewPDFEmitter() *PDFEmitter { return &PDFEmitter{} }
 
 // EmitPDF walks the contract AST, builds ContractData, and renders to a PDF
 // file at outPath.
-func (pe *PDFEmitter) EmitPDF(c *ast.Contract, outPath string) error {
+//
+// jurisdiction selects the boilerplate clause library (Phase 3).
+// Valid values: "common" (default), "delaware", "california", "uk".
+func (pe *PDFEmitter) EmitPDF(c *ast.Contract, outPath string, jurisdiction string) error {
 	// Re-use the same data model as the Markdown emitter.
 	e := NewEmitter()
-	data := e.buildData(c)
+	data := e.buildData(c, jurisdiction)
 	return renderPDF(data, outPath)
 }
 
@@ -97,15 +100,15 @@ func renderPDF(data ContractData, outPath string) error {
 	pdf.SetFont("Helvetica", "", pdfFontBody)
 	pdf.Cell(pdfTextWidth/2, pdfLineHeightB, "Date: "+data.Date)
 	pdf.Ln(pdfLineHeightB)
-	pdf.Cell(pdfTextWidth/2, pdfLineHeightB, "Governing Law: Common Law")
+	pdf.Cell(pdfTextWidth/2, pdfLineHeightB, "Governing Law: "+data.Jurisdiction.GoverningLawLine)
 	pdf.Ln(pdfLineHeightB + 3)
 
 	hr(pdf)
 
 	pdfBody(pdf,
 		"This Agreement (\"Agreement\") is entered into as of "+data.Date+" by and between "+
-			"the parties identified herein. The terms of this Agreement shall be governed by "+
-			"and construed in accordance with applicable common law principles. The parties "+
+			"the parties identified herein. The terms of this Agreement shall be "+
+			data.Jurisdiction.GoverningClause+". The parties "+
 			"intend this Agreement to be legally binding.")
 	pdf.Ln(4)
 	hr(pdf)
@@ -132,17 +135,31 @@ func renderPDF(data ContractData, outPath string) error {
 			"set forth below:")
 	pdf.Ln(2)
 	for _, a := range data.Amounts {
-		pdfBullet(pdf, fmt.Sprintf(
-			"**\"%s\"** means the amount of %s.", titleCase(a.Name), a.Display))
+		amountLine := fmt.Sprintf(
+			"**\"%s\"** means the amount of %s.", titleCase(a.Name), a.Display)
+		if a.CpiAdjusted {
+			amountLine = fmt.Sprintf(
+				"**\"%s\"** means the amount of %s, subject to annual adjustment in "+
+					"accordance with the Consumer Price Index (CPI) as published by the "+
+					"relevant national statistical authority.", titleCase(a.Name), a.Display)
+		}
+		pdfBullet(pdf, amountLine)
 	}
 	for _, tl := range data.TimeLimits {
 		pdfBullet(pdf, fmt.Sprintf(
 			"**\"%s\"** means a period of %s commencing from the date on which the "+
 				"relevant obligation first becomes due.", titleCase(tl.Name), tl.Display))
 	}
+	for _, d := range data.Dates {
+		// Phase 3 — date primitive entries in §2 Definitions
+		pdfBullet(pdf, fmt.Sprintf(
+			"**\"%s\"** means %s (%s).",
+			titleCase(d.Name), d.Display, d.Value))
+	}
 	pdf.Ln(2)
 	pdfBody(pdf,
-		"Any term not defined herein shall be given its ordinary meaning under applicable common law.")
+		"Any term not defined herein shall be given its ordinary meaning under "+
+			data.Jurisdiction.DisplayName+" law.")
 	pdf.Ln(4)
 	hr(pdf)
 
@@ -202,10 +219,7 @@ func renderPDF(data ContractData, outPath string) error {
 			"This Agreement constitutes the entire agreement between the parties with " +
 				"respect to the subject matter hereof and supersedes all prior negotiations, " +
 				"representations, warranties, and understandings, whether oral or written."},
-		{"5.2", "Severability",
-			"If any provision of this Agreement is held by a court of competent jurisdiction " +
-				"to be invalid, illegal, or unenforceable, the remaining provisions shall " +
-				"continue in full force and effect as if the invalid provision had never been included."},
+		{"5.2", "Severability", data.Jurisdiction.SeverabilityClause},
 		{"5.3", "Amendments",
 			"No amendment, modification, or supplement to this Agreement shall be valid or " +
 				"binding unless made in writing and duly executed by all parties."},
@@ -223,6 +237,13 @@ func renderPDF(data ContractData, outPath string) error {
 				"shall be deemed duly given when delivered personally, sent by confirmed " +
 				"electronic transmission, or deposited in the mail with first-class postage prepaid."},
 	}
+	// Append jurisdiction-specific additional provisions (Phase 3)
+	for i, ap := range data.Jurisdiction.AdditionalProvisions {
+		num := fmt.Sprintf("5.%d", 7+i)
+		generalProvisions = append(generalProvisions, struct{ num, head, body string }{
+			num, ap.Heading, ap.Body,
+		})
+	}
 	for _, p := range generalProvisions {
 		pdf.SetFont("Helvetica", "B", pdfFontBody)
 		pdf.Cell(0, pdfLineHeightB, p.num+" "+p.head+".")
@@ -233,7 +254,7 @@ func renderPDF(data ContractData, outPath string) error {
 	}
 	hr(pdf)
 
-	// ── §6 Representations and Warranties ───────────────────────────────────
+	// ── §6 Representations and Warranties ──────────────────────────────────────────
 	pdfH1(pdf, "6. Representations and Warranties")
 	pdfBody(pdf,
 		"Each party hereby represents and warrants to the other parties as of the date "+
@@ -252,8 +273,14 @@ func renderPDF(data ContractData, outPath string) error {
 	pdf.Ln(4)
 	hr(pdf)
 
-	// ── §7 Signatures ───────────────────────────────────────────────────────
-	pdfH1(pdf, "7. Signatures")
+	// ── §7 Dispute Resolution (Phase 3 — jurisdiction-specific) ────────────────────
+	pdfH1(pdf, "7. Dispute Resolution")
+	pdfBody(pdf, data.Jurisdiction.DisputeResolutionClause)
+	pdf.Ln(4)
+	hr(pdf)
+
+	// ── §8 Signatures ────────────────────────────────────────────────────────────
+	pdfH1(pdf, "8. Signatures")
 	pdfItalic(pdf,
 		"IN WITNESS WHEREOF, the parties have caused this Agreement to be executed "+
 			"as of the date first written above.")

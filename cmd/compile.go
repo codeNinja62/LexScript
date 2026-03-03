@@ -14,6 +14,7 @@ import (
 
 var outputPath string
 var outputFormat string
+var jurisdiction string
 
 var compileCmd = &cobra.Command{
 	Use:   "compile <input.lxs>",
@@ -23,7 +24,13 @@ var compileCmd = &cobra.Command{
 
 Output formats (--format / -f):
   md   Markdown document (default)
-  pdf  PDF document via go-pdf/fpdf backend`,
+  pdf  PDF document via go-pdf/fpdf backend
+
+Jurisdiction (--jurisdiction / -j):
+  common      Generic common law boilerplate (default)
+  delaware    State of Delaware clause library
+  california  State of California clause library (JAMS arbitration)
+  uk          England and Wales clause library (LCIA arbitration)`,
 	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		inputPath := args[0]
@@ -34,6 +41,11 @@ Output formats (--format / -f):
 			// valid
 		default:
 			return fmt.Errorf("unsupported output format %q; valid options: md, pdf", outputFormat)
+		}
+
+		// --- Validate --jurisdiction flag (Phase 3) ---
+		if !codegen.IsValidJurisdiction(jurisdiction) {
+			return fmt.Errorf("unsupported jurisdiction %q; valid options: common, delaware, california, uk", jurisdiction)
 		}
 
 		// --- Read source ---
@@ -75,12 +87,12 @@ Output formats (--format / -f):
 		switch outputFormat {
 		case "pdf":
 			pdfEmitter := codegen.NewPDFEmitter()
-			if err := pdfEmitter.EmitPDF(contract, out); err != nil {
+			if err := pdfEmitter.EmitPDF(contract, out, jurisdiction); err != nil {
 				return fmt.Errorf("PDF generation failed: %w", err)
 			}
 		default: // "md"
 			emitter := codegen.NewEmitter()
-			if err := emitter.Emit(contract, out); err != nil {
+			if err := emitter.Emit(contract, out, jurisdiction); err != nil {
 				return fmt.Errorf("code generation failed: %w", err)
 			}
 		}
@@ -134,5 +146,7 @@ func init() {
 		"output path (default: replaces .lxs with .md or .pdf based on --format)")
 	compileCmd.Flags().StringVarP(&outputFormat, "format", "f", "md",
 		"output format: md (Markdown, default) or pdf")
+	compileCmd.Flags().StringVarP(&jurisdiction, "jurisdiction", "j", "common",
+		"jurisdiction-specific clause library: common (default), delaware, california, uk")
 	rootCmd.AddCommand(compileCmd)
 }

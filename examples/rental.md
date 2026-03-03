@@ -6,9 +6,8 @@
 ---
 
 *This Agreement ("Agreement") is entered into as of March 3, 2026 by and between
-the parties identified herein. The terms of this Agreement shall be governed by
-and construed in accordance with applicable common law principles. The parties
-intend this Agreement to be legally binding.*
+the parties identified herein. The terms of this Agreement shall be governed by and construed in accordance with applicable common law principles, without reference to any specific jurisdiction's conflict of laws rules.
+The parties intend this Agreement to be legally binding.*
 
 ---
 
@@ -37,8 +36,9 @@ set forth below:
 - **"Payment Grace"** means a period of 5 Business Days commencing from
   the date on which the relevant obligation first becomes due.
 
-Any term not defined herein shall be given its ordinary meaning under applicable
-common law.
+
+Any term not defined herein shall be given its ordinary meaning under
+applicable Common Law law.
 
 ---
 
@@ -109,10 +109,7 @@ the parties with respect to the subject matter hereof and supersedes all prior
 negotiations, representations, warranties, and understandings, whether oral or
 written.
 
-**5.2 Severability.** If any provision of this Agreement is held by a court of
-competent jurisdiction to be invalid, illegal, or unenforceable, the remaining
-provisions shall continue in full force and effect as if the invalid provision
-had never been included.
+**5.2 Severability.** If any provision of this Agreement is held by a court of competent jurisdiction to be invalid, illegal, or unenforceable, the remaining provisions shall continue in full force and effect as if the invalid provision had never been included.
 
 **5.3 Amendments.** No amendment, modification, or supplement to this Agreement
 shall be valid or binding unless made in writing and duly executed by all parties.
@@ -131,6 +128,7 @@ be in writing and shall be deemed duly given when delivered personally, sent
 by confirmed electronic transmission, or deposited in the mail with first-class
 postage prepaid.
 
+
 ---
 
 ## 6. Representations and Warranties
@@ -146,7 +144,13 @@ of this Agreement:
 
 ---
 
-## 7. Signatures
+## 7. Dispute Resolution
+
+Any dispute, controversy, or claim arising out of or relating to this Agreement, or the breach, termination, or invalidity thereof, shall be resolved by binding arbitration in accordance with the rules of a mutually agreed arbitral body, or, failing agreement, through proceedings before a court of competent jurisdiction applying common law principles.
+
+---
+
+## 8. Signatures
 
 *IN WITNESS WHEREOF, the parties have caused this Agreement to be executed
 as of the date first written above.*

@@ -13,6 +13,7 @@ import (
 	"fmt"
 	"sort"
 	"strings"
+	"time"
 
 	"lexscript/pkg/ast"
 
@@ -54,6 +55,7 @@ func Validate(c *ast.Contract) []Error {
 	parties := make(map[string]lexer.Position)
 	amounts := make(map[string]lexer.Position)
 	timeLimits := make(map[string]lexer.Position)
+	dates := make(map[string]lexer.Position)
 	states := make(map[string]lexer.Position)
 
 	// -----------------------------------------------------------------------
@@ -130,6 +132,24 @@ func Validate(c *ast.Contract) []Error {
 				)})
 			} else {
 				states[s.Name] = s.Pos
+			}
+
+		case decl.Date != nil:
+			// Phase 3 — date declaration: duplicate check + calendar validation
+			d := decl.Date
+			if prev, ok := dates[d.Name]; ok {
+				errs = append(errs, Error{d.Pos, fmt.Sprintf(
+					"duplicate date %q (previously declared at %d:%d)",
+					d.Name, prev.Line, prev.Column,
+				)})
+			} else {
+				dates[d.Name] = d.Pos
+			}
+			if !validDate(d.Value) {
+				errs = append(errs, Error{d.Pos, fmt.Sprintf(
+					"invalid date value %q in date %q; expected ISO 8601 format YYYY-MM-DD with a real calendar date",
+					d.Value, d.Name,
+				)})
 			}
 		}
 	}
@@ -340,4 +360,12 @@ func validTimeUnit(unit string) bool {
 		return true
 	}
 	return false
+}
+
+// validDate checks that s is an ISO 8601 date (YYYY-MM-DD) representing a
+// real calendar date. Uses time.Parse for strict validation.
+// Phase 3 — date arithmetic primitive.
+func validDate(s string) bool {
+	_, err := time.Parse("2006-01-02", s)
+	return err == nil
 }

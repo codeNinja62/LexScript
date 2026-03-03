@@ -1,0 +1,84 @@
+// Employment Agreement — LexScript Phase 3 example contract
+// Demonstrates Phase 3 features:
+//   - date primitive (ISO 8601 date declarations)
+//   - cpi_adjusted amounts (annual CPI-indexed salary)
+//   - Can be compiled with any --jurisdiction flag:
+//       lexs compile examples/employment.lxs -j delaware
+//       lexs compile examples/employment.lxs -j california -f pdf
+//       lexs compile examples/employment.lxs -j uk
+
+contract EmploymentAgreement {
+
+    // --- Parties ---
+    party Employer;
+    party Employee;
+
+    // --- Monetary primitives (Phase 3: cpi_adjusted salary) ---
+    amount base_salary      = 95000.00 USD cpi_adjusted;
+    amount signing_bonus    = 10000.00 USD;
+    amount severance_pay    = 15000.00 USD;
+
+    // --- Time primitives ---
+    time_limit probation_period = 90 days;
+    time_limit notice_period    = 30 days;
+    time_limit contract_term    = 2 years;
+
+    // --- Date primitives (Phase 3: native date declarations) ---
+    date commencement_date = 2026-04-01;
+    date probation_end     = 2026-07-01;
+    date contract_expiry   = 2028-04-01;
+
+    // -----------------------------------------------------------------
+    // States — Finite State Machine
+    // -----------------------------------------------------------------
+
+    // Initial state: onboarding during probation period
+    state Probation {
+        require Employee signs employment_contract;
+        require Employer pays signing_bonus;
+        transition ProbationPassed              -> Active;
+        transition breach(Employee)             -> EmployeeBreached;
+        transition time_limit(probation_period) -> ProbationExpired;
+    }
+
+    // Active employment: both parties meet ongoing obligations
+    state Active {
+        require Employer pays base_salary;
+        require Employee provides services;
+        require Employee notifies Employer;
+        transition ResignationReceived          -> NoticePeriod;
+        transition breach(Employee)             -> EmployeeBreached;
+        transition breach(Employer)             -> EmployerBreached;
+        transition time_limit(contract_term)    -> ContractExpired;
+    }
+
+    // Notice period after resignation
+    state NoticePeriod {
+        require Employee provides services;
+        require Employer pays base_salary;
+        transition time_limit(notice_period)    -> Fulfilled;
+        transition breach(Employer)             -> EmployerBreached;
+    }
+
+    // Terminal states
+
+    state Fulfilled {
+        terminate fulfilled;
+    }
+
+    state ProbationExpired {
+        terminate expired;
+    }
+
+    state ContractExpired {
+        terminate expired;
+    }
+
+    state EmployeeBreached {
+        terminate breached;
+    }
+
+    state EmployerBreached {
+        terminate breached;
+    }
+}

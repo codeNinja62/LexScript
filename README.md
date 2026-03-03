@@ -351,6 +351,31 @@ contract SimplePayment {
 | `transition time_limit(varName) -> TargetState;` | When a declared duration elapses | "Upon the expiration of the **Var Name** period without fulfillment..." |
 | `transition breach(PartyName) -> TargetState;` | On material breach by a named party | "In the event of a material breach by **Party**, this Agreement shall immediately transition to..." |
 
+### CPI-adjusted amounts (Phase 3)
+
+Append `cpi_adjusted` to any `amount` declaration to generate a Consumer Price Index
+adjustment clause in §2 Definitions:
+
+```
+amount base_salary = 95000.00 USD cpi_adjusted;
+```
+
+Generated: *"Base Salary" means the amount of 95000.00 USD, subject to annual adjustment in accordance with the Consumer Price Index (CPI) as published by the relevant national statistical authority.*
+
+### Named date declarations (Phase 3)
+
+Declare named calendar dates at the top level of a contract:
+
+```
+date commencement_date = 2026-04-01;
+date contract_expiry   = 2028-04-01;
+```
+
+Dates appear in §2 Definitions with both human-readable and ISO 8601 representation:
+*"Commencement Date" means April 1, 2026 (2026-04-01).*
+
+Dates are validated as real calendar dates (the semantic pass rejects `2026-02-30`).
+
 ### Three terminal states
 
 | Keyword | Meaning | Legal effect |
@@ -377,12 +402,14 @@ contract SimplePayment {
 | `party` | Declares a named actor |
 | `amount` | Declares a named monetary value |
 | `time_limit` | Declares a named duration |
+| `date` | Declares a named calendar date (ISO 8601) — **Phase 3** |
 | `state` | Declares a FSM state / contract phase |
 | `require` | Declares an obligation within a state |
 | `transition` | Declares a directed edge to another state |
 | `terminate` | Marks a terminal state |
 | `breach` | Breach trigger in a transition |
 | `time_limit(...)` | Time-limit trigger in a transition |
+| `cpi_adjusted` | Optional modifier on `amount` — generates CPI-indexed clause — **Phase 3** |
 
 ### Valid action verbs (for `require` statements)
 
@@ -415,13 +442,23 @@ lexs <command> [flags] <input.lxs>
 Runs the full pipeline: parse → validate → generate.
 
 ```
-lexs compile <input.lxs> [-f md|pdf] [-o <output>]
+lexs compile <input.lxs> [-f md|pdf] [-j common|delaware|california|uk] [-o <output>]
 ```
 
 | Flag | Default | Description |
 |---|---|---|
 | `-f`, `--format` | `md` | Output format: `md` (Markdown) or `pdf` |
+| `-j`, `--jurisdiction` | `common` | Jurisdiction clause library: `common`, `delaware`, `california`, `uk` |
 | `-o`, `--output` | `<input>.md` or `<input>.pdf` | Explicit output path |
+
+**Jurisdiction variants (Phase 3):**
+
+| Value | Governing Law | Dispute Resolution |
+|---|---|---|
+| `common` | Common Law | General arbitration / competent jurisdiction |
+| `delaware` | State of Delaware | Delaware Court of Chancery / Superior Court |
+| `california` | State of California | JAMS arbitration (mediation first) |
+| `uk` | England and Wales | LCIA arbitration, London seat |
 
 **Exit codes:** `0` = success · `1` = compilation error (full error list printed to stderr)
 
@@ -548,6 +585,16 @@ group can reach a terminate node (REQ-2.1 — Tarjan SCC cycle detection)
 error: 35:5: state "GhostState" is unreachable from the initial state "AwaitingPayment" (REQ-2.1)
 ```
 
+### Pass 6 — Date validation (Phase 3)
+
+Every `date` declaration must be ISO 8601 format (`YYYY-MM-DD`) representing a real calendar date.
+
+```
+error: 8:5: invalid date value "2026-02-30" in date "expiry"; expected ISO 8601 format
+         YYYY-MM-DD with a real calendar date
+error: 9:5: duplicate date "effective_date" (previously declared at 7:5)
+```
+
 ---
 
 ## 10. Project Structure
@@ -667,14 +714,13 @@ The PDF backend (`pdf_emitter.go`) reuses the same `ContractData` model and rend
 - **`lexs fmt`:** Canonical auto-formatter for `.lxs` source files
 - **`lexs visualize`:** Graphviz `.dot` state machine export with colour-coded terminal nodes
 
-### Phase 3 — Legal Extensibility (Next)
+### ✓ Phase 3 — Completed
 
-- **Jurisdiction variants:** `--jurisdiction delaware|california|uk|common` selects the correct boilerplate library per REQ-3.2
-- **Lawyer-vetted clause library:** Replace draft templates with attorney-reviewed text for each jurisdiction
-- **Date arithmetic:** Native `Date` primitive (`2026-03-01`) with business-day-aware arithmetic
-- **Inflation adjustment:** `amount` declarations can reference CPI provisions
+- **Jurisdiction variants:** `--jurisdiction common|delaware|california|uk` selects a jurisdiction-specific boilerplate clause library per REQ-3.2. Each jurisdiction provides a distinct governing law statement, severability clause, dispute resolution section (§7), and any additional jurisdiction-specific provisions in §5.
+- **`date` primitive:** New `date <name> = YYYY-MM-DD;` top-level declaration. Dates are validated as real ISO 8601 calendar dates by the semantic pass and appear in §2 Definitions with human-readable display (e.g., *April 1, 2026*).
+- **CPI-adjusted amounts:** Optional `cpi_adjusted` modifier on any `amount` declaration generates an annual Consumer Price Index adjustment clause in §2 Definitions.
 
-### Phase 4 — Tooling
+### Phase 4 — Tooling (Next)
 
 - **VS Code extension:** Syntax highlighting, error squiggles, and FSM preview for `.lxs` files
 - **LSP server:** Language Server Protocol implementation for any editor
@@ -698,4 +744,4 @@ The PDF backend (`pdf_emitter.go`) reuses the same `ContractData` model and rend
 
 ---
 
-*LexScript v0.2 — Compiler Construction Project, Semester 6*
+*LexScript v0.3 — Compiler Construction Project, Semester 6*

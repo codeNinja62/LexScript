@@ -1,14 +1,13 @@
 # {{ titleCase .Title }}
 
 **Date:** {{ .Date }}
-**Governing Law:** Common Law
+**Governing Law:** {{ .Jurisdiction.GoverningLawLine }}
 
 ---
 
 *This Agreement ("Agreement") is entered into as of {{ .Date }} by and between
-the parties identified herein. The terms of this Agreement shall be governed by
-and construed in accordance with applicable common law principles. The parties
-intend this Agreement to be legally binding.*
+the parties identified herein. The terms of this Agreement shall be {{ .Jurisdiction.GoverningClause }}.
+The parties intend this Agreement to be legally binding.*
 
 ---
 
@@ -29,15 +28,18 @@ to enter into, execute, and perform its obligations under this Agreement.
 For the purposes of this Agreement, the following terms shall have the meanings
 set forth below:
 {{ if .Amounts }}{{ range .Amounts }}
-- **"{{ titleCase .Name }}"** means the amount of {{ .Display }}.
+- **"{{ titleCase .Name }}"** means the amount of {{ .Display }}{{ if .CpiAdjusted }}, subject to annual adjustment in accordance with the Consumer Price Index (CPI) as published by the relevant national statistical authority{{ end }}.
 {{- end }}{{ end }}
 {{ if .TimeLimits }}{{ range .TimeLimits }}
 - **"{{ titleCase .Name }}"** means a period of {{ .Value }} {{ titleCase .Unit }} commencing from
   the date on which the relevant obligation first becomes due.
 {{- end }}{{ end }}
+{{ if .Dates }}{{ range .Dates }}
+- **"{{ titleCase .Name }}"** means {{ .Display }} ({{ .Value }}).
+{{- end }}{{ end }}
 
-Any term not defined herein shall be given its ordinary meaning under applicable
-common law.
+Any term not defined herein shall be given its ordinary meaning under
+applicable {{ .Jurisdiction.DisplayName }} law.
 
 ---
 
@@ -78,10 +80,7 @@ the parties with respect to the subject matter hereof and supersedes all prior
 negotiations, representations, warranties, and understandings, whether oral or
 written.
 
-**5.2 Severability.** If any provision of this Agreement is held by a court of
-competent jurisdiction to be invalid, illegal, or unenforceable, the remaining
-provisions shall continue in full force and effect as if the invalid provision
-had never been included.
+**5.2 Severability.** {{ .Jurisdiction.SeverabilityClause }}
 
 **5.3 Amendments.** No amendment, modification, or supplement to this Agreement
 shall be valid or binding unless made in writing and duly executed by all parties.
@@ -99,6 +98,9 @@ parties and uses reasonable efforts to overcome the force majeure condition.
 be in writing and shall be deemed duly given when delivered personally, sent
 by confirmed electronic transmission, or deposited in the mail with first-class
 postage prepaid.
+{{ if .Jurisdiction.AdditionalProvisions }}{{ range $i, $ap := .Jurisdiction.AdditionalProvisions }}
+**5.{{ add 7 $i }} {{ $ap.Heading }}.** {{ $ap.Body }}
+{{ end }}{{ end }}
 
 ---
 
@@ -115,7 +117,13 @@ of this Agreement:
 
 ---
 
-## 7. Signatures
+## 7. Dispute Resolution
+
+{{ .Jurisdiction.DisputeResolutionClause }}
+
+---
+
+## 8. Signatures
 
 *IN WITNESS WHEREOF, the parties have caused this Agreement to be executed
 as of the date first written above.*

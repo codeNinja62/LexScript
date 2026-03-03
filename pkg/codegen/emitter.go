@@ -42,20 +42,23 @@ var contractTemplate string
 
 // ContractData is the complete data model passed to the Markdown template.
 type ContractData struct {
-	Title      string
-	Date       string
-	Parties    []string
-	Amounts    []AmountData
-	TimeLimits []TimeLimitData
-	States     []StateData
+	Title        string
+	Date         string
+	Parties      []string
+	Amounts      []AmountData
+	TimeLimits   []TimeLimitData
+	Dates        []DateData // Phase 3 — date primitive
+	States       []StateData
+	Jurisdiction JurisdictionData // Phase 3 — jurisdiction variant
 }
 
 // AmountData is the template representation of an AmountDecl.
 type AmountData struct {
-	Name     string
-	Display  string // e.g. "50,000.00 USD"
-	Value    float64
-	Currency string
+	Name        string
+	Display     string // e.g. "50,000.00 USD"
+	Value       float64
+	Currency    string
+	CpiAdjusted bool // Phase 3 — triggers CPI-indexed definitions clause
 }
 
 // TimeLimitData is the template representation of a TimeLimitDecl.
@@ -64,6 +67,14 @@ type TimeLimitData struct {
 	Display string // e.g. "30 days"
 	Value   int
 	Unit    string
+}
+
+// DateData is the template representation of a DateDecl.
+// Phase 3 — native Date primitive for date arithmetic provisions.
+type DateData struct {
+	Name    string
+	Value   string // YYYY-MM-DD (raw ISO 8601 value from source)
+	Display string // e.g. "March 1, 2026" (human-readable)
 }
 
 // StateData is the template representation of a StateDecl.
@@ -106,6 +117,9 @@ func NewEmitter() *Emitter {
 		// inc increments an integer (used for 1-based list numbering in templates)
 		"inc": func(i int) int { return i + 1 },
 
+		// add adds two integers (used for dynamic section numbering in templates)
+		"add": func(a, b int) int { return a + b },
+
 		// titleCase converts snake_case / camelCase identifiers to Title Case words
 		"titleCase": titleCase,
 
@@ -124,8 +138,11 @@ func NewEmitter() *Emitter {
 
 // Emit walks the contract AST, builds ContractData, and renders the template
 // to an output Markdown file at outPath.
-func (e *Emitter) Emit(c *ast.Contract, outPath string) error {
-	data := e.buildData(c)
+//
+// jurisdiction selects the boilerplate clause library (Phase 3).
+// Valid values: "common" (default), "delaware", "california", "uk".
+func (e *Emitter) Emit(c *ast.Contract, outPath string, jurisdiction string) error {
+	data := e.buildData(c, jurisdiction)
 
 	f, err := os.Create(outPath)
 	if err != nil {
@@ -143,10 +160,11 @@ func (e *Emitter) Emit(c *ast.Contract, outPath string) error {
 // AST → Data Model conversion
 // ---------------------------------------------------------------------------
 
-func (e *Emitter) buildData(c *ast.Contract) ContractData {
+func (e *Emitter) buildData(c *ast.Contract, jurisdiction string) ContractData {
 	data := ContractData{
-		Title: c.Name,
-		Date:  time.Now().Format("January 2, 2006"),
+		Title:        c.Name,
+		Date:         time.Now().Format("January 2, 2006"),
+		Jurisdiction: GetJurisdiction(jurisdiction),
 	}
 
 	for _, decl := range c.Declarations {
@@ -157,10 +175,11 @@ func (e *Emitter) buildData(c *ast.Contract) ContractData {
 		case decl.Amount != nil:
 			a := decl.Amount
 			data.Amounts = append(data.Amounts, AmountData{
-				Name:     a.Name,
-				Value:    a.Value,
-				Currency: a.Currency,
-				Display:  fmt.Sprintf("%.2f %s", a.Value, a.Currency),
+				Name:        a.Name,
+				Value:       a.Value,
+				Currency:    a.Currency,
+				Display:     fmt.Sprintf("%.2f %s", a.Value, a.Currency),
+				CpiAdjusted: a.CpiAdjusted,
 			})
 
 		case decl.TimeLimit != nil:
@@ -170,6 +189,19 @@ func (e *Emitter) buildData(c *ast.Contract) ContractData {
 				Value:   tl.Value,
 				Unit:    tl.Unit,
 				Display: fmt.Sprintf("%d %s", tl.Value, tl.Unit),
+			})
+
+		case decl.Date != nil:
+			// Phase 3 — date primitive: parse and format for human-readable display
+			d := decl.Date
+			display := d.Value // fallback: raw YYYY-MM-DD
+			if t, err := time.Parse("2006-01-02", d.Value); err == nil {
+				display = t.Format("January 2, 2006")
+			}
+			data.Dates = append(data.Dates, DateData{
+				Name:    d.Name,
+				Value:   d.Value,
+				Display: display,
 			})
 
 		case decl.State != nil:

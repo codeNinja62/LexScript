@@ -8,7 +8,10 @@ SRC       := $(shell find . -name '*.go' -not -path './vendor/*')
 .PHONY: all build run test clean deps fmt vet lint help \
         compile-rental compile-software parse-rental validate-rental \
         compile-rental-pdf compile-software-pdf \
-        fmt-rental fmt-software visualize-rental visualize-software
+        fmt-rental fmt-software visualize-rental visualize-software \
+        compile-employment compile-employment-pdf \
+        compile-employment-de compile-employment-ca compile-employment-uk \
+        validate-employment
 
 ## ── Default ─────────────────────────────────────────────────────────────────
 
@@ -59,6 +62,26 @@ visualize-rental: build                      ## Export rental.lxs FSM → exampl
 
 visualize-software: build                    ## Export software_dev.lxs FSM → .dot (Phase 2)
 	./$(BUILD_DIR)/$(BINARY) visualize examples/software_dev.lxs -o examples/software_dev.dot
+
+## ── Phase 3 commands ─────────────────────────────────────────────────────────
+
+compile-employment: build                    ## Compile examples/employment.lxs → MD (Phase 3)
+	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -o examples/employment.md
+
+compile-employment-pdf: build                ## Compile examples/employment.lxs → PDF (Phase 3)
+	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -f pdf -o examples/employment.pdf
+
+compile-employment-de: build                 ## employment.lxs → MD with Delaware jurisdiction (Phase 3)
+	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -j delaware -o examples/employment_delaware.md
+
+compile-employment-ca: build                 ## employment.lxs → MD with California jurisdiction (Phase 3)
+	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -j california -o examples/employment_california.md
+
+compile-employment-uk: build                 ## employment.lxs → MD with UK jurisdiction (Phase 3)
+	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -j uk -o examples/employment_uk.md
+
+validate-employment: build                   ## Validate examples/employment.lxs (Phase 3)
+	./$(BUILD_DIR)/$(BINARY) validate examples/employment.lxs
 
 ## ── Testing ─────────────────────────────────────────────────────────────────
 

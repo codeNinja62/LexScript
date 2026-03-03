@@ -27,6 +27,9 @@ var l2lLexer = lexer.MustSimple([]lexer.SimpleRule{
 	{Name: "Whitespace", Pattern: `\s+`},
 	// Punctuation / operators (order matters: -> before standalone -)
 	{Name: "Arrow", Pattern: `\->`},
+	// Date literal must come before Int to prevent 2026-03-01 tokenising as Int
+	// Phase 3: native Date primitive (REQ Phase 3 — date arithmetic)
+	{Name: "Date", Pattern: `[0-9]{4}-[0-9]{2}-[0-9]{2}`},
 	// Numeric literals (float before int so 3.14 is not split into 3 and .14)
 	{Name: "Float", Pattern: `[0-9]+\.[0-9]+`},
 	{Name: "Int", Pattern: `[0-9]+`},
@@ -56,6 +59,7 @@ type Declaration struct {
 	Party     *PartyDecl     `parser:"( @@"`
 	Amount    *AmountDecl    `parser:"| @@"`
 	TimeLimit *TimeLimitDecl `parser:"| @@"`
+	Date      *DateDecl      `parser:"| @@"`
 	State     *StateDecl     `parser:"| @@ )"`
 }
 
@@ -70,12 +74,16 @@ type PartyDecl struct {
 // AmountDecl declares a named monetary value (REQ-2.3 currency primitive).
 //
 //	amount <Name> = <Value> <Currency>;
-//	e.g.: amount rent = 1500.00 USD;
+//	amount <Name> = <Value> <Currency> cpi_adjusted;
+//	e.g.: amount rent = 1500.00 USD cpi_adjusted;
+//
+// Phase 3: optional cpi_adjusted modifier triggers annual CPI-indexed legal clause.
 type AmountDecl struct {
-	Pos      lexer.Position
-	Name     string  `parser:"'amount' @Ident '='"`
-	Value    float64 `parser:"@(Float|Int)"`
-	Currency string  `parser:"@Ident ';'"`
+	Pos         lexer.Position
+	Name        string  `parser:"'amount' @Ident '='"`
+	Value       float64 `parser:"@(Float|Int)"`
+	Currency    string  `parser:"@Ident"`
+	CpiAdjusted bool    `parser:"( @'cpi_adjusted' )? ';'"`
 }
 
 // TimeLimitDecl declares a named duration (REQ-2.3 time primitive).
@@ -154,6 +162,16 @@ type TimeLimitTrigger struct {
 type BreachTrigger struct {
 	Pos   lexer.Position
 	Party string `parser:"'breach' '(' @Ident ')'"`
+}
+
+// DateDecl declares a named calendar date value (Phase 3 — date arithmetic primitive).
+//
+//	date <Name> = YYYY-MM-DD;
+//	e.g.: date effective_date = 2026-03-01;
+type DateDecl struct {
+	Pos   lexer.Position
+	Name  string `parser:"'date' @Ident '='"`
+	Value string `parser:"@Date ';'"`
 }
 
 // TerminateStmt marks this state as a terminal (leaf) node of the FSM.

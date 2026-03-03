@@ -114,15 +114,14 @@ make validate-rental        # semantic check only (no output file)
 - Terminal states use `terminate fulfilled|breached|expired`.
 - Reachability is checked via gonum BFS from the **first declared state** in the contract (REQ-2.1).
 - Deadlock cycles (states that can never reach `terminate`) are detected by Tarjan’s SCC via `gonum/graph/topo.TarjanSCC` (REQ-2.1 full impl).
-- Valid currencies: `USD EUR GBP JPY CAD AUD CHF`. Valid time units: `days months years business_days hours weeks`.
-
+- Valid currencies: `USD EUR GBP JPY CAD AUD CHF`. Valid time units: `days months years business_days hours weeks`.- **Phase 3 — `date` declarations:** `date <name> = YYYY-MM-DD;` adds a named calendar date to §2 Definitions. Validated as a real ISO 8601 date. Lexer `Date` token rule precedes `Int` to prevent greedy mismatch.
+- **Phase 3 — `cpi_adjusted`:** Optional modifier on `amount` declarations. Generates a CPI-indexed adjustment clause in §2.
+- **Phase 3 — `--jurisdiction`:** Selects boilerplate clause library: `common` (default), `delaware`, `california`, `uk`. Affects §1 preamble, §2 catchall, §5 severability + additional provisions, and §7 Dispute Resolution.
 ## Planned but Not Yet Implemented (Roadmap)
 
 Do not implement these without explicit instruction — they conflict with planned architecture decisions:
-- **Jurisdiction variants:** `--jurisdiction` flag selecting jurisdiction-specific clause libraries (REQ-3.2 full impl).
 - **VS Code extension + LSP:** Syntax highlighting and error squiggles for `.lxs` files.
-- **Date arithmetic:** Native `Date` primitive with business-day-aware arithmetic.
-- **Inflation adjustment:** `amount` declarations referencing CPI provisions.
+- **Date arithmetic expressions:** Date arithmetic within `require` / `transition` contexts (currently only top-level declarations are supported).
 - **Web playground:** Browser-based editor and live contract preview.
 
 ## Key Files Reference
@@ -135,8 +134,9 @@ Do not implement these without explicit instruction — they conflict with plann
 | Semantic validation (all passes) | `pkg/semantic/validate.go` |
 | Markdown code generation + data model | `pkg/codegen/emitter.go` |
 | PDF code generation (Phase 2) | `pkg/codegen/pdf_emitter.go` |
+| Jurisdiction clause library (Phase 3) | `pkg/codegen/jurisdiction.go` |
 | Markdown output template | `pkg/codegen/templates/contract.md.tmpl` |
 | Source formatter (Phase 2) | `pkg/format/format.go` |
 | DOT visualizer (Phase 2) | `pkg/visualize/visualize.go` |
 | Formal grammar (EBNF) | `grammar/grammar.ebnf` |
-| Example contracts | `examples/rental.lxs`, `examples/software_dev.lxs` |
+| Example contracts | `examples/rental.lxs`, `examples/software_dev.lxs`, `examples/employment.lxs` |

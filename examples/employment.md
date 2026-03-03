@@ -1,4 +1,4 @@
-# Software Development Agreement
+# Employment Agreement
 
 **Date:** March 3, 2026
 **Governing Law:** Common Law
@@ -15,8 +15,8 @@ The parties intend this Agreement to be legally binding.*
 
 The following parties are bound by the terms of this Agreement:
 
-**1.** Client
-**2.** Developer
+**1.** Employer
+**2.** Employee
 
 Each party represents and warrants that it has full legal capacity and authority
 to enter into, execute, and perform its obligations under this Agreement.
@@ -28,17 +28,20 @@ to enter into, execute, and perform its obligations under this Agreement.
 For the purposes of this Agreement, the following terms shall have the meanings
 set forth below:
 
-- **"Milestone One"** means the amount of 5000.00 USD.
-- **"Milestone Two"** means the amount of 5000.00 USD.
-- **"Final Payment"** means the amount of 10000.00 USD.
+- **"Base Salary"** means the amount of 95000.00 USD, subject to annual adjustment in accordance with the Consumer Price Index (CPI) as published by the relevant national statistical authority.
+- **"Signing Bonus"** means the amount of 10000.00 USD.
+- **"Severance Pay"** means the amount of 15000.00 USD.
 
-- **"Delivery Window"** means a period of 90 Days commencing from
+- **"Probation Period"** means a period of 90 Days commencing from
   the date on which the relevant obligation first becomes due.
-- **"Review Period"** means a period of 14 Days commencing from
+- **"Notice Period"** means a period of 30 Days commencing from
   the date on which the relevant obligation first becomes due.
-- **"Payment Due"** means a period of 30 Days commencing from
+- **"Contract Term"** means a period of 2 Years commencing from
   the date on which the relevant obligation first becomes due.
 
+- **"Commencement Date"** means April 1, 2026 (2026-04-01).
+- **"Probation End"** means July 1, 2026 (2026-07-01).
+- **"Contract Expiry"** means April 1, 2028 (2028-04-01).
 
 Any term not defined herein shall be given its ordinary meaning under
 applicable Common Law law.
@@ -47,80 +50,68 @@ applicable Common Law law.
 
 ## 3. Obligations and Performance
 
-### 3. Awaiting Kickoff
+### 3. Probation
 
-**Phase:** Awaiting Kickoff
+**Phase:** Probation
 
-The following obligations apply during the **Awaiting Kickoff** phase:
+The following obligations apply during the **Probation** phase:
 
-- **Client** shall execute the Contract
+- **Employee** shall execute the Employment Contract
   as required under this Agreement. Failure to do so within the prescribed time
   shall constitute a material breach of this clause.
-- **Developer** shall execute the Contract
-  as required under this Agreement. Failure to do so within the prescribed time
-  shall constitute a material breach of this clause.
-**Applicable Transitions and Conditions:**
-
-Upon the occurrence of **Kickoff Complete**, this Agreement shall transition to the **Development** phase.
-
-Upon the expiration of the **Delivery Window** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Expired** phase.
-
-### 3. Development
-
-**Phase:** Development
-
-The following obligations apply during the **Development** phase:
-
-- **Developer** shall deliver the Prototype
-  as required under this Agreement. Failure to do so within the prescribed time
-  shall constitute a material breach of this clause.
-- **Client** shall pay the Milestone One
+- **Employer** shall pay the Signing Bonus
   as required under this Agreement. Failure to do so within the prescribed time
   shall constitute a material breach of this clause.
 **Applicable Transitions and Conditions:**
 
-Upon the occurrence of **Prototype Approved**, this Agreement shall transition to the **Review** phase.
+Upon the occurrence of **Probation Passed**, this Agreement shall transition to the **Active** phase.
 
-In the event of a material breach by **Developer**, this Agreement shall immediately transition to the **Developer Breached** phase, and the non-breaching party shall be entitled to seek all remedies available at law or in equity.
+In the event of a material breach by **Employee**, this Agreement shall immediately transition to the **Employee Breached** phase, and the non-breaching party shall be entitled to seek all remedies available at law or in equity.
 
-Upon the expiration of the **Delivery Window** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Expired** phase.
+Upon the expiration of the **Probation Period** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Probation Expired** phase.
 
-### 3. Review
+### 3. Active
 
-**Phase:** Review
+**Phase:** Active
 
-The following obligations apply during the **Review** phase:
+The following obligations apply during the **Active** phase:
 
-- **Client** shall provide the Feedback
+- **Employer** shall pay the Base Salary
   as required under this Agreement. Failure to do so within the prescribed time
   shall constitute a material breach of this clause.
-- **Developer** shall deliver the Final Product
+- **Employee** shall provide the Services
   as required under this Agreement. Failure to do so within the prescribed time
   shall constitute a material breach of this clause.
-**Applicable Transitions and Conditions:**
-
-Upon the occurrence of **Review Complete**, this Agreement shall transition to the **Awaiting Final Payment** phase.
-
-In the event of a material breach by **Client**, this Agreement shall immediately transition to the **Client Breached** phase, and the non-breaching party shall be entitled to seek all remedies available at law or in equity.
-
-Upon the expiration of the **Review Period** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Expired** phase.
-
-### 3. Awaiting Final Payment
-
-**Phase:** Awaiting Final Payment
-
-The following obligations apply during the **Awaiting Final Payment** phase:
-
-- **Client** shall pay the Final Payment
+- **Employee** shall notify the Employer
   as required under this Agreement. Failure to do so within the prescribed time
   shall constitute a material breach of this clause.
 **Applicable Transitions and Conditions:**
 
-Upon the occurrence of **Payment Received**, this Agreement shall transition to the **Fulfilled** phase.
+Upon the occurrence of **Resignation Received**, this Agreement shall transition to the **Notice Period** phase.
 
-Upon the expiration of the **Payment Due** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Expired** phase.
+In the event of a material breach by **Employee**, this Agreement shall immediately transition to the **Employee Breached** phase, and the non-breaching party shall be entitled to seek all remedies available at law or in equity.
 
-In the event of a material breach by **Client**, this Agreement shall immediately transition to the **Client Breached** phase, and the non-breaching party shall be entitled to seek all remedies available at law or in equity.
+In the event of a material breach by **Employer**, this Agreement shall immediately transition to the **Employer Breached** phase, and the non-breaching party shall be entitled to seek all remedies available at law or in equity.
+
+Upon the expiration of the **Contract Term** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Contract Expired** phase.
+
+### 3. Notice Period
+
+**Phase:** Notice Period
+
+The following obligations apply during the **Notice Period** phase:
+
+- **Employee** shall provide the Services
+  as required under this Agreement. Failure to do so within the prescribed time
+  shall constitute a material breach of this clause.
+- **Employer** shall pay the Base Salary
+  as required under this Agreement. Failure to do so within the prescribed time
+  shall constitute a material breach of this clause.
+**Applicable Transitions and Conditions:**
+
+Upon the expiration of the **Notice Period** period without fulfillment of the obligations set forth herein, this Agreement shall automatically transition to the **Fulfilled** phase.
+
+In the event of a material breach by **Employer**, this Agreement shall immediately transition to the **Employer Breached** phase, and the non-breaching party shall be entitled to seek all remedies available at law or in equity.
 
 
 ---
@@ -130,15 +121,18 @@ In the event of a material breach by **Client**, this Agreement shall immediatel
 ### 4. Fulfilled — Fulfilled
 
 This Agreement terminates upon the successful performance of all obligations by all parties, constituting complete fulfillment of the Agreement. Upon termination by fulfillment, all rights and obligations under this Agreement shall cease, and the parties shall have no further liability to one another.
-### 4. Breached — Developer Breached
-
-This Agreement terminates immediately upon a material breach by any party. The non-breaching party shall be entitled to all remedies available at law or in equity, including but not limited to damages, specific performance, and injunctive relief. Termination under this clause does not limit any other rights or remedies available to the non-breaching party.
-### 4. Breached — Client Breached
-
-This Agreement terminates immediately upon a material breach by any party. The non-breaching party shall be entitled to all remedies available at law or in equity, including but not limited to damages, specific performance, and injunctive relief. Termination under this clause does not limit any other rights or remedies available to the non-breaching party.
-### 4. Expired — Expired
+### 4. Expired — Probation Expired
 
 This Agreement terminates automatically upon the expiration of the applicable time limit without fulfillment of the obligations set forth herein. Unless the parties execute a written extension agreement prior to expiry, no party shall have any further obligation to the others after termination by expiry.
+### 4. Expired — Contract Expired
+
+This Agreement terminates automatically upon the expiration of the applicable time limit without fulfillment of the obligations set forth herein. Unless the parties execute a written extension agreement prior to expiry, no party shall have any further obligation to the others after termination by expiry.
+### 4. Breached — Employee Breached
+
+This Agreement terminates immediately upon a material breach by any party. The non-breaching party shall be entitled to all remedies available at law or in equity, including but not limited to damages, specific performance, and injunctive relief. Termination under this clause does not limit any other rights or remedies available to the non-breaching party.
+### 4. Breached — Employer Breached
+
+This Agreement terminates immediately upon a material breach by any party. The non-breaching party shall be entitled to all remedies available at law or in equity, including but not limited to damages, specific performance, and injunctive relief. Termination under this clause does not limit any other rights or remedies available to the non-breaching party.
 
 ---
 
@@ -198,7 +192,7 @@ as of the date first written above.*
 
 ---
 
-**Client**
+**Employer**
 
 Signature: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
@@ -211,7 +205,7 @@ Date: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
 ---
 
-**Developer**
+**Employee**
 
 Signature: \_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_\_
 
