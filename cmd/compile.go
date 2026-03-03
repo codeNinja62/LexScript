@@ -13,13 +13,28 @@ import (
 )
 
 var outputPath string
+var outputFormat string
 
 var compileCmd = &cobra.Command{
 	Use:   "compile <input.lxs>",
-	Short: "Compile a .lxs contract into a Markdown document",
-	Args:  cobra.ExactArgs(1),
+	Short: "Compile a .lxs contract into a Markdown or PDF document",
+	Long: `Compile a .lxs contract source file through the full pipeline:
+  pre-scan → parse → semantic validate → code generation
+
+Output formats (--format / -f):
+  md   Markdown document (default)
+  pdf  PDF document via go-pdf/fpdf backend`,
+	Args: cobra.ExactArgs(1),
 	RunE: func(cmd *cobra.Command, args []string) error {
 		inputPath := args[0]
+
+		// --- Validate --format flag ---
+		switch outputFormat {
+		case "md", "pdf":
+			// valid
+		default:
+			return fmt.Errorf("unsupported output format %q; valid options: md, pdf", outputFormat)
+		}
 
 		// --- Read source ---
 		src, err := os.ReadFile(inputPath)
@@ -52,13 +67,22 @@ var compileCmd = &cobra.Command{
 		// --- Determine output path ---
 		out := outputPath
 		if out == "" {
-			out = strings.TrimSuffix(inputPath, ".lxs") + ".md"
+			base := strings.TrimSuffix(inputPath, ".lxs")
+			out = base + "." + outputFormat
 		}
 
-		// --- Backend: Template-driven code generation ---
-		emitter := codegen.NewEmitter()
-		if err := emitter.Emit(contract, out); err != nil {
-			return fmt.Errorf("code generation failed: %w", err)
+		// --- Backend: format-specific code generation ---
+		switch outputFormat {
+		case "pdf":
+			pdfEmitter := codegen.NewPDFEmitter()
+			if err := pdfEmitter.EmitPDF(contract, out); err != nil {
+				return fmt.Errorf("PDF generation failed: %w", err)
+			}
+		default: // "md"
+			emitter := codegen.NewEmitter()
+			if err := emitter.Emit(contract, out); err != nil {
+				return fmt.Errorf("code generation failed: %w", err)
+			}
 		}
 
 		fmt.Printf("✓  compiled: %s → %s\n", inputPath, out)
@@ -107,6 +131,8 @@ func isIdentRune(r rune) bool {
 
 func init() {
 	compileCmd.Flags().StringVarP(&outputPath, "output", "o", "",
-		"output path (default: replaces .lxs with .md)")
+		"output path (default: replaces .lxs with .md or .pdf based on --format)")
+	compileCmd.Flags().StringVarP(&outputFormat, "format", "f", "md",
+		"output format: md (Markdown, default) or pdf")
 	rootCmd.AddCommand(compileCmd)
 }

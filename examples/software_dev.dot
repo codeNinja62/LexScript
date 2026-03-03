@@ -1,0 +1,33 @@
+digraph SoftwareDevelopmentAgreement {
+    rankdir=LR;
+    graph [fontname="Helvetica" fontsize=12 label="SoftwareDevelopmentAgreement — State Machine" labelloc=t];
+    node  [fontname="Helvetica" fontsize=11];
+    edge  [fontname="Helvetica" fontsize=10];
+
+    // Entry point
+    __start [label="" shape=point width=0.2];
+    __start -> AwaitingKickoff;
+
+    // States
+    AwaitingKickoff [label="Awaiting Kickoff" shape=box style=rounded];
+    Development [label="Development" shape=box style=rounded];
+    Review [label="Review" shape=box style=rounded];
+    AwaitingFinalPayment [label="Awaiting Final Payment" shape=box style=rounded];
+    Fulfilled [label="Fulfilled" shape=doublecircle style=filled fillcolor="#b7f5b7" color="#2e7d32"];
+    DeveloperBreached [label="Developer Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828"];
+    ClientBreached [label="Client Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828"];
+    Expired [label="Expired" shape=doublecircle style=filled fillcolor="#fff9c4" color="#f57f17"];
+
+    // Transitions
+    AwaitingKickoff -> Development [label="Kickoff Complete"];
+    AwaitingKickoff -> Expired [label="⏱ time_limit(delivery_window)"];
+    Development -> Review [label="Prototype Approved"];
+    Development -> DeveloperBreached [label="⚠ breach(Developer)"];
+    Development -> Expired [label="⏱ time_limit(delivery_window)"];
+    Review -> AwaitingFinalPayment [label="Review Complete"];
+    Review -> ClientBreached [label="⚠ breach(Client)"];
+    Review -> Expired [label="⏱ time_limit(review_period)"];
+    AwaitingFinalPayment -> Fulfilled [label="Payment Received"];
+    AwaitingFinalPayment -> Expired [label="⏱ time_limit(payment_due)"];
+    AwaitingFinalPayment -> ClientBreached [label="⚠ breach(Client)"];
+}

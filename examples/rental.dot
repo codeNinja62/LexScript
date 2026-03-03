@@ -1,0 +1,25 @@
+digraph RentalAgreement {
+    rankdir=LR;
+    graph [fontname="Helvetica" fontsize=12 label="RentalAgreement — State Machine" labelloc=t];
+    node  [fontname="Helvetica" fontsize=11];
+    edge  [fontname="Helvetica" fontsize=10];
+
+    // Entry point
+    __start [label="" shape=point width=0.2];
+    __start -> AwaitingDeposit;
+
+    // States
+    AwaitingDeposit [label="Awaiting Deposit" shape=box style=rounded];
+    Active [label="Active" shape=box style=rounded];
+    Fulfilled [label="Fulfilled" shape=doublecircle style=filled fillcolor="#b7f5b7" color="#2e7d32"];
+    TenantBreached [label="Tenant Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828"];
+    LandlordBreached [label="Landlord Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828"];
+    Expired [label="Expired" shape=doublecircle style=filled fillcolor="#fff9c4" color="#f57f17"];
+
+    // Transitions
+    AwaitingDeposit -> Active [label="Payment Received"];
+    AwaitingDeposit -> Expired [label="⏱ time_limit(payment_grace)"];
+    Active -> TenantBreached [label="⚠ breach(Tenant)"];
+    Active -> LandlordBreached [label="⚠ breach(Landlord)"];
+    Active -> Fulfilled [label="⏱ time_limit(lease_duration)"];
+}

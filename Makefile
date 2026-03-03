@@ -1,12 +1,14 @@
 # LexScript Compiler — Makefile
 # Requires: Go 1.24+
 
-BINARY   := lexscript
+BINARY   := lexs
 BUILD_DIR := bin
 SRC       := $(shell find . -name '*.go' -not -path './vendor/*')
 
 .PHONY: all build run test clean deps fmt vet lint help \
-        compile-rental compile-software parse-rental validate-rental
+        compile-rental compile-software parse-rental validate-rental \
+        compile-rental-pdf compile-software-pdf \
+        fmt-rental fmt-software visualize-rental visualize-software
 
 ## ── Default ─────────────────────────────────────────────────────────────────
 
@@ -14,7 +16,7 @@ all: deps build
 
 ## ── Build ───────────────────────────────────────────────────────────────────
 
-build: deps                                  ## Build the lexscript binary into bin/
+build: deps                                  ## Build the lexs binary into bin/
 	@mkdir -p $(BUILD_DIR)
 	go build -o $(BUILD_DIR)/$(BINARY) .
 	@echo "built: $(BUILD_DIR)/$(BINARY)"
@@ -26,17 +28,37 @@ deps:                                        ## Download and tidy Go modules
 
 ## ── Run examples ────────────────────────────────────────────────────────────
 
-compile-rental: build                        ## Compile examples/rental.lexscript → examples/rental.md
-	./$(BUILD_DIR)/$(BINARY) compile examples/rental.lexscript -o examples/rental.md
+compile-rental: build                        ## Compile examples/rental.lxs → examples/rental.md
+	./$(BUILD_DIR)/$(BINARY) compile examples/rental.lxs -o examples/rental.md
 
-compile-software: build                      ## Compile examples/software_dev.lexscript
-	./$(BUILD_DIR)/$(BINARY) compile examples/software_dev.lexscript -o examples/software_dev.md
+compile-software: build                      ## Compile examples/software_dev.lxs
+	./$(BUILD_DIR)/$(BINARY) compile examples/software_dev.lxs -o examples/software_dev.md
 
-parse-rental: build                          ## Dump AST JSON for rental.lexscript (debug)
-	./$(BUILD_DIR)/$(BINARY) parse examples/rental.lexscript
+parse-rental: build                          ## Dump AST JSON for rental.lxs (debug)
+	./$(BUILD_DIR)/$(BINARY) parse examples/rental.lxs
 
-validate-rental: build                       ## Run semantic checks on rental.lexscript (debug)
-	./$(BUILD_DIR)/$(BINARY) validate examples/rental.lexscript
+validate-rental: build                       ## Run semantic checks on rental.lxs (debug)
+	./$(BUILD_DIR)/$(BINARY) validate examples/rental.lxs
+
+## ── Phase 2 commands ─────────────────────────────────────────────────────────
+
+compile-rental-pdf: build                    ## Compile examples/rental.lxs → examples/rental.pdf (Phase 2)
+	./$(BUILD_DIR)/$(BINARY) compile examples/rental.lxs -f pdf -o examples/rental.pdf
+
+compile-software-pdf: build                  ## Compile examples/software_dev.lxs → PDF (Phase 2)
+	./$(BUILD_DIR)/$(BINARY) compile examples/software_dev.lxs -f pdf -o examples/software_dev.pdf
+
+fmt-rental: build                            ## Format examples/rental.lxs in-place (lexs fmt, Phase 2)
+	./$(BUILD_DIR)/$(BINARY) fmt --write examples/rental.lxs
+
+fmt-software: build                          ## Format examples/software_dev.lxs in-place (Phase 2)
+	./$(BUILD_DIR)/$(BINARY) fmt --write examples/software_dev.lxs
+
+visualize-rental: build                      ## Export rental.lxs FSM → examples/rental.dot (Phase 2)
+	./$(BUILD_DIR)/$(BINARY) visualize examples/rental.lxs -o examples/rental.dot
+
+visualize-software: build                    ## Export software_dev.lxs FSM → .dot (Phase 2)
+	./$(BUILD_DIR)/$(BINARY) visualize examples/software_dev.lxs -o examples/software_dev.dot
 
 ## ── Testing ─────────────────────────────────────────────────────────────────
 
@@ -64,7 +86,7 @@ lint: fmt vet                                ## Format, vet (add golangci-lint f
 
 clean:                                       ## Remove built binary and generated outputs
 	rm -rf $(BUILD_DIR)
-	rm -f examples/*.md
+	rm -f examples/*.md examples/*.pdf examples/*.dot
 
 ## ── Help ────────────────────────────────────────────────────────────────────
 

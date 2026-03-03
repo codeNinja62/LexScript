@@ -6,16 +6,21 @@
 //  2. Type checking — valid currency codes and positive time durations (REQ-2.3)
 //  3. Reference resolution — every name used must be declared
 //  4. State body completeness — no dead-end states (REQ-2.2)
-//  5. Reachability — BFS from the first state flags unreachable nodes (REQ-2.1/2.2)
+//  5. Cycle detection via Tarjan's SCC + Reachability from initial state (REQ-2.1)
 package semantic
 
 import (
 	"fmt"
+	"sort"
 	"strings"
 
 	"lexscript/pkg/ast"
 
 	"github.com/alecthomas/participle/v2/lexer"
+	"gonum.org/v1/gonum/graph"
+	"gonum.org/v1/gonum/graph/simple"
+	"gonum.org/v1/gonum/graph/topo"
+	"gonum.org/v1/gonum/graph/traverse"
 )
 
 // ---------------------------------------------------------------------------
@@ -208,7 +213,12 @@ func Validate(c *ast.Contract) []Error {
 	}
 
 	// -----------------------------------------------------------------------
-	// Pass 3 — Reachability (BFS from first declared state)
+	// Pass 3 — Cycle detection (Tarjan SCC) + Reachability (REQ-2.1)
+	//
+	// gonum/graph replaces the previous manual BFS.
+	// - TarjanSCC detects deadlock cycles: SCCs with >1 node, or a
+	//   single-node SCC with a self-loop.
+	// - traverse.BreadthFirst checks reachability from the initial state.
 	// -----------------------------------------------------------------------
 	var initialState string
 	for _, decl := range c.Declarations {
@@ -218,36 +228,93 @@ func Validate(c *ast.Contract) []Error {
 		}
 	}
 
-	if initialState != "" && len(states) > 1 {
-		reachable := make(map[string]bool)
-		reachable[initialState] = true
-		queue := []string{initialState}
-
-		for len(queue) > 0 {
-			curr := queue[0]
-			queue = queue[1:]
-			for _, decl := range c.Declarations {
-				if decl.State == nil || decl.State.Name != curr {
+	if initialState != "" {
+		// Build directed graph: nodes = states, edges = transitions.
+		g := simple.NewDirectedGraph()
+		stateToID := make(map[string]int64)
+		idToState := make(map[int64]string)
+		var nextID int64
+		for name := range states {
+			stateToID[name] = nextID
+			idToState[nextID] = name
+			g.AddNode(simple.Node(nextID))
+			nextID++
+		}
+		for _, decl := range c.Declarations {
+			if decl.State == nil {
+				continue
+			}
+			fromID := stateToID[decl.State.Name]
+			for _, body := range decl.State.Body {
+				if body.Transition == nil {
 					continue
 				}
-				for _, body := range decl.State.Body {
-					if body.Transition != nil {
-						tgt := body.Transition.Target
-						if !reachable[tgt] {
-							reachable[tgt] = true
-							queue = append(queue, tgt)
-						}
-					}
+				toID, ok := stateToID[body.Transition.Target]
+				if !ok {
+					continue // undefined target already caught in Pass 2
+				}
+				if !g.HasEdgeFromTo(fromID, toID) {
+					g.SetEdge(g.NewEdge(simple.Node(fromID), simple.Node(toID)))
 				}
 			}
 		}
 
-		for name, pos := range states {
-			if !reachable[name] {
-				errs = append(errs, Error{pos, fmt.Sprintf(
-					"state %q is unreachable from the initial state %q (REQ-2.1/2.2)",
-					name, initialState,
+		// --- Cycle detection: Tarjan's Strongly Connected Components ---
+		sccs := topo.TarjanSCC(g)
+		for _, scc := range sccs {
+			switch len(scc) {
+			case 1:
+				// Single-node SCC — only a cycle when there is a self-loop.
+				n := scc[0]
+				if g.HasEdgeFromTo(n.ID(), n.ID()) {
+					name := idToState[n.ID()]
+					errs = append(errs, Error{states[name], fmt.Sprintf(
+						"state %q has a self-transition (cycle); all execution paths "+
+							"must eventually reach a terminate node "+
+							"(REQ-2.1 — Tarjan SCC cycle detection)",
+						name,
+					)})
+				}
+			default:
+				// Multi-node SCC = deadlock cycle among two or more states.
+				names := make([]string, len(scc))
+				for i, n := range scc {
+					names[i] = idToState[n.ID()]
+				}
+				sort.Strings(names)
+				// Use the position of the lexically first state in the cycle.
+				var cyclePos lexer.Position
+				for i, name := range names {
+					if i == 0 || states[name].Line < cyclePos.Line {
+						cyclePos = states[name]
+					}
+				}
+				errs = append(errs, Error{cyclePos, fmt.Sprintf(
+					"states %v form a deadlock cycle; no execution path from this "+
+						"group can reach a terminate node "+
+						"(REQ-2.1 — Tarjan SCC cycle detection)",
+					names,
 				)})
+			}
+		}
+
+		// --- Reachability: BFS from first declared state (REQ-2.1) ---
+		if len(states) > 1 {
+			startID := stateToID[initialState]
+			reachable := make(map[int64]bool)
+			reachable[startID] = true
+			bfsWalker := &traverse.BreadthFirst{}
+			bfsWalker.Walk(g, simple.Node(startID), func(n graph.Node, _ int) bool {
+				reachable[n.ID()] = true
+				return false
+			})
+			for name, pos := range states {
+				if !reachable[stateToID[name]] {
+					errs = append(errs, Error{pos, fmt.Sprintf(
+						"state %q is unreachable from the initial state %q (REQ-2.1)",
+						name, initialState,
+					)})
+				}
 			}
 		}
 	}

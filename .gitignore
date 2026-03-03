@@ -1,0 +1,16 @@
+﻿# LexScript .gitignore
+
+# Compiled binaries
+bin/
+*.exe
+
+# Go build/test cache
+*.test
+
+# IDE/editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*.bak
+*.tmp
