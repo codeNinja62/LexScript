@@ -14,6 +14,7 @@ import { resolveLexsBinary } from "./resolveBinary";
 
 let panel: vscode.WebviewPanel | undefined;
 let extensionContext: vscode.ExtensionContext | undefined;
+let lastSource: string | undefined;
 
 export function registerFsmPreview(context: vscode.ExtensionContext): void {
   extensionContext = context;
@@ -27,7 +28,8 @@ export function registerFsmPreview(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.languageId === "lexscript" && panel) {
-        updatePreview(doc.getText());
+        lastSource = doc.getText();
+        updatePreview(lastSource);
       }
     })
   );
@@ -42,28 +44,42 @@ function openPreview(context: vscode.ExtensionContext): void {
     return;
   }
 
+  // Cache source so we can replay it after the webview signals ready.
+  lastSource = editor.document.getText();
+
   if (panel) {
     panel.reveal(vscode.ViewColumn.Beside);
-  } else {
-    panel = vscode.window.createWebviewPanel(
-      "lexscriptFsmPreview",
-      "LexScript FSM Preview",
-      vscode.ViewColumn.Beside,
-      {
-        enableScripts: true,
-        retainContextWhenHidden: true,
-        localResourceRoots: [
-          vscode.Uri.file(path.join(context.extensionPath, "node_modules", "@viz-js", "viz", "dist"))
-        ],
-      }
-    );
-    panel.onDidDispose(() => {
-      panel = undefined;
-    });
-    panel.webview.html = getWebviewHtml(panel.webview, context);
+    // Already loaded — safe to send immediately.
+    updatePreview(lastSource);
+    return;
   }
 
-  updatePreview(editor.document.getText());
+  panel = vscode.window.createWebviewPanel(
+    "lexscriptFsmPreview",
+    "LexScript FSM Preview",
+    vscode.ViewColumn.Beside,
+    {
+      enableScripts: true,
+      retainContextWhenHidden: true,
+      localResourceRoots: [
+        vscode.Uri.file(path.join(context.extensionPath, "node_modules", "@viz-js", "viz", "dist"))
+      ],
+    }
+  );
+  panel.onDidDispose(() => {
+    panel = undefined;
+  });
+
+  // Handle messages FROM the webview.
+  panel.webview.onDidReceiveMessage((msg) => {
+    if (msg.type === "ready" && lastSource) {
+      // Webview finished loading — now safe to send DOT.
+      updatePreview(lastSource);
+    }
+  });
+
+  panel.webview.html = getWebviewHtml(panel.webview, context);
+  // Do NOT call updatePreview here — wait for the "ready" message.
 }
 
 function updatePreview(source: string): void {
@@ -196,7 +212,9 @@ function getWebviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
     const viewport  = document.getElementById("viewport");
     const canvas    = document.getElementById("canvas");
     const errorEl   = document.getElementById("error");
-    const loadingEl = document.getElementById("loading");
+    const loadingEl = document.getElementById("loading");\n
+    // Tell the extension the webview is ready to receive data.
+    vscode.postMessage({ type: "ready" });
 
     // ── Transform state ──────────────────────────────────────────────────────
     let scale = 1, tx = 0, ty = 0;
