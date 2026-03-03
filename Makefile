@@ -3,7 +3,15 @@
 
 BINARY   := lexs
 BUILD_DIR := bin
-SRC       := $(shell find . -name '*.go' -not -path './vendor/*')
+
+# ── OS detection ─────────────────────────────────────────────────────────────
+ifeq ($(OS),Windows_NT)
+    EXE    := .exe
+    MKDIR  := if not exist $(BUILD_DIR) mkdir $(BUILD_DIR)
+else
+    EXE    :=
+    MKDIR  := mkdir -p $(BUILD_DIR)
+endif
 
 .PHONY: all build run test clean deps fmt vet lint help \
         compile-rental compile-software parse-rental validate-rental \
@@ -22,9 +30,9 @@ all: deps build
 ## ── Build ───────────────────────────────────────────────────────────────────
 
 build: deps                                  ## Build the lexs binary into bin/
-	@mkdir -p $(BUILD_DIR)
-	go build -o $(BUILD_DIR)/$(BINARY) .
-	@echo "built: $(BUILD_DIR)/$(BINARY)"
+	@$(MKDIR)
+	go build -o $(BUILD_DIR)/$(BINARY)$(EXE) .
+	@echo "built: $(BUILD_DIR)/$(BINARY)$(EXE)"
 
 ## ── Dependencies ────────────────────────────────────────────────────────────
 
@@ -34,67 +42,67 @@ deps:                                        ## Download and tidy Go modules
 ## ── Run examples ────────────────────────────────────────────────────────────
 
 compile-rental: build                        ## Compile examples/rental.lxs → examples/rental.md
-	./$(BUILD_DIR)/$(BINARY) compile examples/rental.lxs -o examples/rental.md
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/rental.lxs -o examples/rental.md
 
 compile-software: build                      ## Compile examples/software_dev.lxs
-	./$(BUILD_DIR)/$(BINARY) compile examples/software_dev.lxs -o examples/software_dev.md
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/software_dev.lxs -o examples/software_dev.md
 
 parse-rental: build                          ## Dump AST JSON for rental.lxs (debug)
-	./$(BUILD_DIR)/$(BINARY) parse examples/rental.lxs
+	./$(BUILD_DIR)/$(BINARY)$(EXE) parse examples/rental.lxs
 
 validate-rental: build                       ## Run semantic checks on rental.lxs (debug)
-	./$(BUILD_DIR)/$(BINARY) validate examples/rental.lxs
+	./$(BUILD_DIR)/$(BINARY)$(EXE) validate examples/rental.lxs
 
 ## ── Phase 2 commands ─────────────────────────────────────────────────────────
 
 compile-rental-pdf: build                    ## Compile examples/rental.lxs → examples/rental.pdf (Phase 2)
-	./$(BUILD_DIR)/$(BINARY) compile examples/rental.lxs -f pdf -o examples/rental.pdf
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/rental.lxs -f pdf -o examples/rental.pdf
 
 compile-software-pdf: build                  ## Compile examples/software_dev.lxs → PDF (Phase 2)
-	./$(BUILD_DIR)/$(BINARY) compile examples/software_dev.lxs -f pdf -o examples/software_dev.pdf
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/software_dev.lxs -f pdf -o examples/software_dev.pdf
 
 fmt-rental: build                            ## Format examples/rental.lxs in-place (lexs fmt, Phase 2)
-	./$(BUILD_DIR)/$(BINARY) fmt --write examples/rental.lxs
+	./$(BUILD_DIR)/$(BINARY)$(EXE) fmt --write examples/rental.lxs
 
 fmt-software: build                          ## Format examples/software_dev.lxs in-place (Phase 2)
-	./$(BUILD_DIR)/$(BINARY) fmt --write examples/software_dev.lxs
+	./$(BUILD_DIR)/$(BINARY)$(EXE) fmt --write examples/software_dev.lxs
 
 visualize-rental: build                      ## Export rental.lxs FSM → examples/rental.dot (Phase 2)
-	./$(BUILD_DIR)/$(BINARY) visualize examples/rental.lxs -o examples/rental.dot
+	./$(BUILD_DIR)/$(BINARY)$(EXE) visualize examples/rental.lxs -o examples/rental.dot
 
 visualize-software: build                    ## Export software_dev.lxs FSM → .dot (Phase 2)
-	./$(BUILD_DIR)/$(BINARY) visualize examples/software_dev.lxs -o examples/software_dev.dot
+	./$(BUILD_DIR)/$(BINARY)$(EXE) visualize examples/software_dev.lxs -o examples/software_dev.dot
 
 ## ── Phase 3 commands ─────────────────────────────────────────────────────────
 
 compile-employment: build                    ## Compile examples/employment.lxs → MD (Phase 3)
-	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -o examples/employment.md
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/employment.lxs -o examples/employment.md
 
 compile-employment-pdf: build                ## Compile examples/employment.lxs → PDF (Phase 3)
-	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -f pdf -o examples/employment.pdf
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/employment.lxs -f pdf -o examples/employment.pdf
 
 compile-employment-de: build                 ## employment.lxs → MD with Delaware jurisdiction (Phase 3)
-	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -j delaware -o examples/employment_delaware.md
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/employment.lxs -j delaware -o examples/employment_delaware.md
 
 compile-employment-ca: build                 ## employment.lxs → MD with California jurisdiction (Phase 3)
-	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -j california -o examples/employment_california.md
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/employment.lxs -j california -o examples/employment_california.md
 
 compile-employment-uk: build                 ## employment.lxs → MD with UK jurisdiction (Phase 3)
-	./$(BUILD_DIR)/$(BINARY) compile examples/employment.lxs -j uk -o examples/employment_uk.md
+	./$(BUILD_DIR)/$(BINARY)$(EXE) compile examples/employment.lxs -j uk -o examples/employment_uk.md
 
 validate-employment: build                   ## Validate examples/employment.lxs (Phase 3)
-	./$(BUILD_DIR)/$(BINARY) validate examples/employment.lxs
+	./$(BUILD_DIR)/$(BINARY)$(EXE) validate examples/employment.lxs
 
 ## ── Phase 4 commands ─────────────────────────────────────────────────────────
 
 lsp: build                                   ## Start the LSP server over stdin/stdout (Phase 4)
-	./$(BUILD_DIR)/$(BINARY) lsp
+	./$(BUILD_DIR)/$(BINARY)$(EXE) lsp
 
 playground: build                            ## Start web playground on http://localhost:8080 (Phase 4)
-	./$(BUILD_DIR)/$(BINARY) serve
+	./$(BUILD_DIR)/$(BINARY)$(EXE) serve
 
 playground-port: build                       ## Start playground on custom port, e.g. make playground-port PORT=3000
-	./$(BUILD_DIR)/$(BINARY) serve -a :$(PORT)
+	./$(BUILD_DIR)/$(BINARY)$(EXE) serve -a :$(PORT)
 
 extension-install:                           ## Install VS Code extension npm deps (Phase 4)
 	cd vscode-extension && npm install
@@ -102,11 +110,13 @@ extension-install:                           ## Install VS Code extension npm de
 extension-build: extension-install           ## Build VS Code extension (Phase 4)
 	cd vscode-extension && npm run compile
 
-install-extension: extension-build           ## Package + install .vsix into VS Code
+install-extension: extension-build           ## Rebuild .vsix from source + install (requires npm)
 	cd vscode-extension && npx vsce package --allow-missing-repository
 	code --install-extension vscode-extension/lexscript-0.4.0.vsix
 
-setup: build install-extension               ## First-time setup: build binary + install extension
+setup: build                                 ## First-time setup: build binary + install pre-built extension
+	code --install-extension vscode-extension/lexscript-0.4.0.vsix
+	@echo "Done! Reload VS Code: Ctrl+Shift+P -> Developer: Reload Window"
 
 ## ── Testing ─────────────────────────────────────────────────────────────────
 
