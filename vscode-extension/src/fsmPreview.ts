@@ -8,12 +8,15 @@
 //   4. On document change, re-run and update the preview.
 
 import * as vscode from "vscode";
+import * as path from "path";
 import { execFile } from "child_process";
 import { resolveLexsBinary } from "./resolveBinary";
 
 let panel: vscode.WebviewPanel | undefined;
+let extensionContext: vscode.ExtensionContext | undefined;
 
 export function registerFsmPreview(context: vscode.ExtensionContext): void {
+  extensionContext = context;
   const disposable = vscode.commands.registerCommand(
     "lexscript.showFsmPreview",
     () => openPreview(context)
@@ -49,12 +52,15 @@ function openPreview(context: vscode.ExtensionContext): void {
       {
         enableScripts: true,
         retainContextWhenHidden: true,
+        localResourceRoots: [
+          vscode.Uri.file(path.join(context.extensionPath, "node_modules", "@viz-js", "viz", "dist"))
+        ],
       }
     );
     panel.onDidDispose(() => {
       panel = undefined;
     });
-    panel.webview.html = getWebviewHtml();
+    panel.webview.html = getWebviewHtml(panel.webview, context);
   }
 
   updatePreview(editor.document.getText());
@@ -88,12 +94,21 @@ function updatePreview(source: string): void {
   }
 }
 
-function getWebviewHtml(): string {
+function getWebviewHtml(webview: vscode.Webview, context: vscode.ExtensionContext): string {
+  const vizDiskPath = vscode.Uri.file(
+    path.join(context.extensionPath, "node_modules", "@viz-js", "viz", "dist", "viz-global.js")
+  );
+  const vizUri = webview.asWebviewUri(vizDiskPath);
+  const nonce = getNonce();
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta http-equiv="Content-Security-Policy"
+        content="default-src 'none';
+                 script-src 'nonce-${nonce}';
+                 style-src 'unsafe-inline';" />
   <title>LexScript FSM Preview</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -175,8 +190,8 @@ function getWebviewHtml(): string {
   <div id="error"></div>
   <div id="loading">Waiting for FSM data…</div>
 
-  <script src="https://unpkg.com/@viz-js/viz@3.4.0/lib/viz-standalone.js"></script>
-  <script>
+  <script nonce="${nonce}" src="${vizUri}"></script>
+  <script nonce="${nonce}">
     const vscode    = acquireVsCodeApi();
     const viewport  = document.getElementById("viewport");
     const canvas    = document.getElementById("canvas");
@@ -273,4 +288,13 @@ function getWebviewHtml(): string {
   </script>
 </body>
 </html>`;
+}
+
+function getNonce(): string {
+  let text = "";
+  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+  for (let i = 0; i < 32; i++) {
+    text += possible.charAt(Math.floor(Math.random() * possible.length));
+  }
+  return text;
 }
