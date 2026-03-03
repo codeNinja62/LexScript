@@ -96,71 +96,178 @@ function getWebviewHtml(): string {
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LexScript FSM Preview</title>
   <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
     body {
-      margin: 0;
-      padding: 16px;
       background: var(--vscode-editor-background);
       color: var(--vscode-editor-foreground);
       font-family: var(--vscode-font-family);
-      overflow: auto;
+      overflow: hidden;
+      width: 100vw;
+      height: 100vh;
     }
-    #graph {
-      width: 100%;
-      height: calc(100vh - 32px);
-      overflow: auto;
-      box-sizing: border-box;
+    #toolbar {
+      position: fixed;
+      top: 8px;
+      right: 12px;
+      display: flex;
+      gap: 6px;
+      z-index: 10;
     }
-    #graph svg {
+    #toolbar button {
+      background: var(--vscode-button-background);
+      color: var(--vscode-button-foreground);
+      border: none;
+      border-radius: 4px;
+      padding: 3px 9px;
+      cursor: pointer;
+      font-size: 14px;
+    }
+    #toolbar button:hover {
+      background: var(--vscode-button-hoverBackground);
+    }
+    #viewport {
       width: 100%;
-      height: auto;
+      height: 100%;
+      overflow: hidden;
+      cursor: grab;
+    }
+    #viewport.panning { cursor: grabbing; }
+    #canvas {
+      transform-origin: 0 0;
+      display: inline-block;
+    }
+    #canvas svg {
       display: block;
     }
     #error {
+      position: fixed;
+      top: 40px;
+      left: 12px;
+      right: 12px;
       color: var(--vscode-errorForeground);
+      background: var(--vscode-inputValidation-errorBackground);
+      border: 1px solid var(--vscode-inputValidation-errorBorder);
+      padding: 8px 12px;
+      border-radius: 4px;
       white-space: pre-wrap;
       font-family: monospace;
+      font-size: 12px;
       display: none;
     }
-    .loading {
-      text-align: center;
-      padding: 2em;
-      opacity: 0.6;
+    #loading {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      opacity: 0.5;
     }
   </style>
 </head>
 <body>
-  <div id="graph"><div class="loading">Waiting for FSM data…</div></div>
-  <pre id="error"></pre>
+  <div id="toolbar">
+    <button id="btn-zoom-in"  title="Zoom in">+</button>
+    <button id="btn-zoom-out" title="Zoom out">−</button>
+    <button id="btn-fit"      title="Fit to window">⊡</button>
+  </div>
+  <div id="viewport">
+    <div id="canvas"></div>
+  </div>
+  <div id="error"></div>
+  <div id="loading">Waiting for FSM data…</div>
 
-  <!-- viz.js standalone (CDN for simplicity; could be bundled) -->
   <script src="https://unpkg.com/@viz-js/viz@3.4.0/lib/viz-standalone.js"></script>
   <script>
-    const vscode = acquireVsCodeApi();
-    const graphEl = document.getElementById("graph");
-    const errorEl = document.getElementById("error");
+    const vscode    = acquireVsCodeApi();
+    const viewport  = document.getElementById("viewport");
+    const canvas    = document.getElementById("canvas");
+    const errorEl   = document.getElementById("error");
+    const loadingEl = document.getElementById("loading");
 
+    // ── Transform state ──────────────────────────────────────────────────────
+    let scale = 1, tx = 0, ty = 0;
+
+    function applyTransform() {
+      canvas.style.transform = \`translate(\${tx}px, \${ty}px) scale(\${scale})\`;
+    }
+
+    function fitToWindow() {
+      const svg = canvas.querySelector("svg");
+      if (!svg) return;
+      const vw = viewport.clientWidth  - 32;
+      const vh = viewport.clientHeight - 32;
+      const sw = svg.getBBox ? svg.getBBox().width  : svg.clientWidth;
+      const sh = svg.getBBox ? svg.getBBox().height : svg.clientHeight;
+      if (!sw || !sh) return;
+      scale = Math.min(vw / sw, vh / sh, 1);
+      tx = (vw - sw * scale) / 2 + 16;
+      ty = (vh - sh * scale) / 2 + 16;
+      applyTransform();
+    }
+
+    // ── Zoom ─────────────────────────────────────────────────────────────────
+    viewport.addEventListener("wheel", (e) => {
+      e.preventDefault();
+      const factor = e.deltaY < 0 ? 1.1 : 0.91;
+      const rect   = viewport.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      tx = mx - (mx - tx) * factor;
+      ty = my - (my - ty) * factor;
+      scale *= factor;
+      applyTransform();
+    }, { passive: false });
+
+    document.getElementById("btn-zoom-in").addEventListener("click", () => {
+      const cx = viewport.clientWidth / 2, cy = viewport.clientHeight / 2;
+      tx = cx - (cx - tx) * 1.2; ty = cy - (cy - ty) * 1.2; scale *= 1.2;
+      applyTransform();
+    });
+    document.getElementById("btn-zoom-out").addEventListener("click", () => {
+      const cx = viewport.clientWidth / 2, cy = viewport.clientHeight / 2;
+      tx = cx - (cx - tx) * 0.83; ty = cy - (cy - ty) * 0.83; scale *= 0.83;
+      applyTransform();
+    });
+    document.getElementById("btn-fit").addEventListener("click", fitToWindow);
+
+    // ── Pan ──────────────────────────────────────────────────────────────────
+    let dragging = false, dragX = 0, dragY = 0;
+    viewport.addEventListener("mousedown", (e) => {
+      dragging = true; dragX = e.clientX - tx; dragY = e.clientY - ty;
+      viewport.classList.add("panning");
+    });
+    window.addEventListener("mousemove", (e) => {
+      if (!dragging) return;
+      tx = e.clientX - dragX; ty = e.clientY - dragY;
+      applyTransform();
+    });
+    window.addEventListener("mouseup", () => {
+      dragging = false; viewport.classList.remove("panning");
+    });
+
+    // ── Messages from extension ───────────────────────────────────────────
     window.addEventListener("message", async (event) => {
       const msg = event.data;
       if (msg.type === "dot") {
-        errorEl.style.display = "none";
+        errorEl.style.display  = "none";
+        loadingEl.style.display = "none";
         try {
           const viz = await Viz.instance();
           const svg = viz.renderSVGElement(msg.dot);
-          // Remove fixed width/height so CSS can scale it freely.
           svg.removeAttribute("width");
           svg.removeAttribute("height");
-          svg.style.width = "100%";
-          svg.style.height = "auto";
-          graphEl.innerHTML = "";
-          graphEl.appendChild(svg);
+          canvas.innerHTML = "";
+          canvas.appendChild(svg);
+          // Small delay to let the browser measure the SVG before fitting.
+          requestAnimationFrame(() => setTimeout(fitToWindow, 50));
         } catch (e) {
-          errorEl.textContent = "Render error: " + e.message;
-          errorEl.style.display = "block";
+          errorEl.textContent    = "Render error: " + e.message;
+          errorEl.style.display  = "block";
         }
       } else if (msg.type === "error") {
-        graphEl.innerHTML = "";
-        errorEl.textContent = msg.message;
-        errorEl.style.display = "block";
+        loadingEl.style.display = "none";
+        canvas.innerHTML        = "";
+        errorEl.textContent     = msg.message;
+        errorEl.style.display   = "block";
       }
     });
   </script>

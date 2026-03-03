@@ -27,6 +27,13 @@ import (
 func DOT(c *ast.Contract) string {
 	var b strings.Builder
 
+	// Build a lookup map: time_limit name → "value unit" string.
+	timeLimits := make(map[string]string)
+	for _, decl := range c.Declarations {
+		if decl.TimeLimit != nil {
+			timeLimits[decl.TimeLimit.Name] = fmt.Sprintf("%d %s", decl.TimeLimit.Value, decl.TimeLimit.Unit)
+		}
+	}
 	b.WriteString(fmt.Sprintf("digraph %s {\n", sanitize(c.Name)))
 	b.WriteString("    rankdir=TB;\n")
 	b.WriteString("    splines=curved;\n")
@@ -79,8 +86,8 @@ func DOT(c *ast.Contract) string {
 				continue
 			}
 			tr := body.Transition
-			label := triggerLabel(tr.Trigger)
-			b.WriteString(fmt.Sprintf("    %s -> %s [label=%q];\n",
+			label := triggerLabel(tr.Trigger, timeLimits)
+			b.WriteString(fmt.Sprintf("    %s -> %s [label=%q]\n",
 				sanitize(s.Name), sanitize(tr.Target), label))
 		}
 	}
@@ -128,12 +135,16 @@ func nodeDefinition(name, termKind string) string {
 }
 
 // triggerLabel produces a human-readable edge label from a Trigger node.
-func triggerLabel(t *ast.Trigger) string {
+// timeLimits maps declared time_limit names to their "value unit" string.
+func triggerLabel(t *ast.Trigger, timeLimits map[string]string) string {
 	switch {
 	case t.TimeLimitRef != nil:
-		return fmt.Sprintf("⏱ time_limit(%s)", t.TimeLimitRef.Ref)
+		if val, ok := timeLimits[t.TimeLimitRef.Ref]; ok {
+			return "after " + val
+		}
+		return "after " + t.TimeLimitRef.Ref
 	case t.BreachRef != nil:
-		return fmt.Sprintf("⚠ breach(%s)", t.BreachRef.Party)
+		return "breach: " + t.BreachRef.Party
 	case t.EventName != nil:
 		return splitCamel(*t.EventName)
 	default:

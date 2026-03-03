@@ -23,15 +23,15 @@ digraph SoftwareDevelopmentAgreement {
     Expired [label="Expired" shape=doublecircle style=filled fillcolor="#fff9c4" color="#f57f17" penwidth=2 width=1.1 height=1.1 fixedsize=true];
 
     // Transitions
-    AwaitingKickoff -> Development [label="Kickoff Complete"];
-    AwaitingKickoff -> Expired [label="⏱ time_limit(delivery_window)"];
-    Development -> Review [label="Prototype Approved"];
-    Development -> DeveloperBreached [label="⚠ breach(Developer)"];
-    Development -> Expired [label="⏱ time_limit(delivery_window)"];
-    Review -> AwaitingFinalPayment [label="Review Complete"];
-    Review -> ClientBreached [label="⚠ breach(Client)"];
-    Review -> Expired [label="⏱ time_limit(review_period)"];
-    AwaitingFinalPayment -> Fulfilled [label="Payment Received"];
-    AwaitingFinalPayment -> Expired [label="⏱ time_limit(payment_due)"];
-    AwaitingFinalPayment -> ClientBreached [label="⚠ breach(Client)"];
+    AwaitingKickoff -> Development [label="Kickoff Complete"]
+    AwaitingKickoff -> Expired [label="after 90 days"]
+    Development -> Review [label="Prototype Approved"]
+    Development -> DeveloperBreached [label="breach: Developer"]
+    Development -> Expired [label="after 90 days"]
+    Review -> AwaitingFinalPayment [label="Review Complete"]
+    Review -> ClientBreached [label="breach: Client"]
+    Review -> Expired [label="after 14 days"]
+    AwaitingFinalPayment -> Fulfilled [label="Payment Received"]
+    AwaitingFinalPayment -> Expired [label="after 30 days"]
+    AwaitingFinalPayment -> ClientBreached [label="breach: Client"]
 }
