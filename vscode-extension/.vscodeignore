@@ -1,0 +1,12 @@
+# Source and build artefacts not needed at runtime
+src/
+tsconfig.json
+.eslintrc*
+.editorconfig
+.gitignore
+*.map
+
+# Dev tooling
+node_modules/
+.vscode-test/
+*.vsix
