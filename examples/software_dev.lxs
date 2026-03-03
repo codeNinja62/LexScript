@@ -1,0 +1,62 @@
+// Service Agreement — LexScript example
+// Demonstrates a software development contract with milestone payments.
+
+contract SoftwareDevelopmentAgreement {
+
+    party Client;
+    party Developer;
+
+    amount milestone_one   = 5000.00 USD;
+    amount milestone_two   = 5000.00 USD;
+    amount final_payment   = 10000.00 USD;
+
+    time_limit delivery_window   = 90 days;
+    time_limit review_period     = 14 days;
+    time_limit payment_due       = 30 days;
+
+    state AwaitingKickoff {
+        require Client signs contract;
+        require Developer signs contract;
+        transition KickoffComplete -> Development;
+        transition time_limit(delivery_window) -> Expired;
+    }
+
+    state Development {
+        require Developer delivers prototype;
+        require Client pays milestone_one;
+        transition PrototypeApproved           -> Review;
+        transition breach(Developer)           -> DeveloperBreached;
+        transition time_limit(delivery_window) -> Expired;
+    }
+
+    state Review {
+        require Client provides feedback;
+        require Developer delivers final_product;
+        transition ReviewComplete -> AwaitingFinalPayment;
+        transition breach(Client) -> ClientBreached;
+        transition time_limit(review_period) -> Expired;
+    }
+
+    state AwaitingFinalPayment {
+        require Client pays final_payment;
+        transition PaymentReceived           -> Fulfilled;
+        transition time_limit(payment_due)   -> Expired;
+        transition breach(Client)            -> ClientBreached;
+    }
+
+    state Fulfilled {
+        terminate fulfilled;
+    }
+
+    state DeveloperBreached {
+        terminate breached;
+    }
+
+    state ClientBreached {
+        terminate breached;
+    }
+
+    state Expired {
+        terminate expired;
+    }
+}

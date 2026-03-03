@@ -1,0 +1,58 @@
+// Rental Agreement — LexScript example contract
+// Demonstrates: parties, amount, time_limit, state machine with
+//   require obligations, event transitions, time_limit triggers,
+//   breach triggers, and all three terminal states.
+
+contract RentalAgreement {
+
+    // --- Parties ---
+    party Landlord;
+    party Tenant;
+
+    // --- Monetary primitives (REQ-2.3) ---
+    amount rent          = 1500.00 USD;
+    amount security_deposit = 3000.00 USD;
+
+    // --- Time primitives (REQ-2.3) ---
+    time_limit lease_duration = 12 months;
+    time_limit payment_grace  = 5 business_days;
+
+    // -----------------------------------------------------------------
+    // States — each is a node in the Finite State Machine
+    // -----------------------------------------------------------------
+
+    // Initial state: awaiting first rent payment and deposit
+    state AwaitingDeposit {
+        require Tenant pays security_deposit;
+        require Tenant pays rent;
+        transition PaymentReceived      -> Active;
+        transition time_limit(payment_grace) -> Expired;
+    }
+
+    // Active lease: Landlord must provide access; Tenant must pay monthly rent
+    state Active {
+        require Landlord provides property_access;
+        require Tenant pays rent;
+        transition breach(Tenant)              -> TenantBreached;
+        transition breach(Landlord)            -> LandlordBreached;
+        transition time_limit(lease_duration)  -> Fulfilled;
+    }
+
+    // Terminal states — leaf nodes of the FSM (REQ-2.2)
+
+    state Fulfilled {
+        terminate fulfilled;
+    }
+
+    state TenantBreached {
+        terminate breached;
+    }
+
+    state LandlordBreached {
+        terminate breached;
+    }
+
+    state Expired {
+        terminate expired;
+    }
+}

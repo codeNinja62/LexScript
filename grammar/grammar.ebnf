@@ -1,0 +1,94 @@
+(* ============================================================ *)
+(* LexScript DSL — Formal Grammar (EBNF)                       *)
+(* Compiler Construction Project, Semester 6                   *)
+(* ============================================================ *)
+
+(*
+ * This language is intentionally Turing-incomplete.
+ * Looping constructs (while, for, loop, goto, repeat, until)
+ * are forbidden at the lexer pre-scan stage (REQ-1.3).
+ * Every state path must terminate at a `terminate` statement,
+ * guaranteeing the FSM halts (REQ-2.2).
+ *)
+
+(* ---- Top-Level ---- *)
+
+contract     = "contract" ident "{" declaration* "}" ;
+
+declaration  = party_decl
+             | amount_decl
+             | time_limit_decl
+             | state_decl
+             ;
+
+(* ---- Declarations ---- *)
+
+party_decl       = "party" ident ";" ;
+
+amount_decl      = "amount" ident "=" number currency ";" ;
+
+time_limit_decl  = "time_limit" ident "=" integer time_unit ";" ;
+
+state_decl       = "state" ident "{" state_body* "}" ;
+
+(* ---- State Body Statements ---- *)
+
+state_body   = require_stmt
+             | transition_stmt
+             | terminate_stmt
+             ;
+
+require_stmt = "require" ident action ident ";" ;
+(* party_ref action object_ref  *)
+(* e.g.: require Buyer pays invoice *)
+
+transition_stmt = "transition" trigger "->" ident ";" ;
+(* trigger -> target_state       *)
+
+terminate_stmt  = "terminate" term_kind ";" ;
+
+(* ---- Triggers ---- *)
+
+trigger      = time_limit_trigger
+             | breach_trigger
+             | event_name
+             ;
+
+time_limit_trigger = "time_limit" "(" ident ")" ;
+(* e.g.: time_limit(lease_duration) *)
+
+breach_trigger     = "breach" "(" ident ")" ;
+(* e.g.: breach(Seller)             *)
+
+event_name         = ident ;
+(* e.g.: PaymentConfirmed           *)
+
+(* ---- Terminals and Primitives ---- *)
+
+term_kind    = "fulfilled" | "breached" | "expired" ;
+
+action       = "pays" | "provides" | "delivers" | "signs"
+             | "returns" | "transfers" | "notifies"
+             ;
+
+currency     = "USD" | "EUR" | "GBP" | "JPY" | "CAD" | "AUD" | "CHF" ;
+
+time_unit    = "days" | "months" | "years" | "business_days"
+             | "hours" | "weeks"
+             ;
+
+number       = integer | float ;
+
+integer      = digit+ ;
+float        = digit+ "." digit+ ;
+digit        = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+ident        = letter ( letter | digit | "_" )* ;
+letter       = "a" ... "z" | "A" ... "Z" | "_" ;
+
+(* ---- Comments (stripped by lexer) ---- *)
+(*   Single-line: // ...  *)
+
+(* ---- Forbidden constructs (rejected at pre-scan stage) ---- *)
+(*   while, for, loop, goto, repeat, until, do, foreach, recurse  *)
+(* These identifiers will cause an immediate compilation error.   *)
