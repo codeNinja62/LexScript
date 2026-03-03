@@ -14,19 +14,41 @@ let client: LanguageClient | undefined;
 export function startClient(context: ExtensionContext): void {
   const config = workspace.getConfiguration("lexscript");
   const serverPath: string = config.get("serverPath", "lexs");
+  const winExt = process.platform === "win32" ? ".exe" : "";
 
-  // Resolve the binary path.  If it's a relative path, resolve against
-  // the workspace root so users can set "serverPath": "./bin/lexs".
-  let command = serverPath;
-  if (
-    !path.isAbsolute(serverPath) &&
-    serverPath !== "lexs" &&
-    workspace.workspaceFolders?.length
-  ) {
-    command = path.join(
-      workspace.workspaceFolders[0].uri.fsPath,
-      serverPath
-    );
+  let command: string;
+
+  if (serverPath === "lexs") {
+    // Default: auto-resolve to <workspaceRoot>/bin/lexs[.exe] so the extension
+    // works out-of-the-box without requiring lexs on PATH.
+    // Node's child_process.spawn does NOT resolve PATH extensions on Windows,
+    // so we must use the explicit binary name.
+    if (workspace.workspaceFolders?.length) {
+      command = path.join(
+        workspace.workspaceFolders[0].uri.fsPath,
+        "bin",
+        `lexs${winExt}`
+      );
+    } else {
+      // No workspace open — fall back to PATH, append .exe on Windows.
+      command = `lexs${winExt}`;
+    }
+  } else if (!path.isAbsolute(serverPath)) {
+    // Relative path: resolve against workspace root.
+    const base = workspace.workspaceFolders?.length
+      ? workspace.workspaceFolders[0].uri.fsPath
+      : ".";
+    command = path.join(base, serverPath);
+    // Append .exe on Windows if no extension provided.
+    if (process.platform === "win32" && !path.extname(command)) {
+      command += ".exe";
+    }
+  } else {
+    // Absolute path — use as-is, but append .exe on Windows if missing.
+    command = serverPath;
+    if (process.platform === "win32" && !path.extname(command)) {
+      command += ".exe";
+    }
   }
 
   const serverOptions: ServerOptions = {
