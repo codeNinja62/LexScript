@@ -21,9 +21,9 @@ digraph RentalAgreement {
     Expired [label="Expired" shape=doublecircle style=filled fillcolor="#fff9c4" color="#f57f17" penwidth=2 width=1.1 height=1.1 fixedsize=true];
 
     // Transitions
-    AwaitingDeposit -> Active [label="Payment Received"];
-    AwaitingDeposit -> Expired [label="⏱ time_limit(payment_grace)"];
-    Active -> TenantBreached [label="⚠ breach(Tenant)"];
-    Active -> LandlordBreached [label="⚠ breach(Landlord)"];
-    Active -> Fulfilled [label="⏱ time_limit(lease_duration)"];
+    AwaitingDeposit -> Active [label="Payment Received"]
+    AwaitingDeposit -> Expired [label="after 5 business_days"]
+    Active -> TenantBreached [label="breach: Tenant"]
+    Active -> LandlordBreached [label="breach: Landlord"]
+    Active -> Fulfilled [label="after 12 months"]
 }
