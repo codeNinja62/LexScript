@@ -212,9 +212,7 @@ function getWebviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
     const viewport  = document.getElementById("viewport");
     const canvas    = document.getElementById("canvas");
     const errorEl   = document.getElementById("error");
-    const loadingEl = document.getElementById("loading");\n
-    // Tell the extension the webview is ready to receive data.
-    vscode.postMessage({ type: "ready" });
+    const loadingEl = document.getElementById("loading");
 
     // ── Transform state ──────────────────────────────────────────────────────
     let scale = 1, tx = 0, ty = 0;
@@ -303,6 +301,11 @@ function getWebviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
         errorEl.style.display   = "block";
       }
     });
+
+    // Tell the extension the webview is ready to receive data.
+    // IMPORTANT: must come AFTER window.addEventListener("message", ...) so the
+    // DOT response cannot arrive before the handler is wired up.
+    vscode.postMessage({ type: "ready" });
   </script>
 </body>
 </html>`;
