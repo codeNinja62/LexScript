@@ -12,7 +12,8 @@ SRC       := $(shell find . -name '*.go' -not -path './vendor/*')
         compile-employment compile-employment-pdf \
         compile-employment-de compile-employment-ca compile-employment-uk \
         validate-employment \
-        lsp playground extension-install extension-build
+        lsp playground extension-install extension-build \
+        install-extension setup
 
 ## ── Default ─────────────────────────────────────────────────────────────────
 
@@ -100,6 +101,12 @@ extension-install:                           ## Install VS Code extension npm de
 
 extension-build: extension-install           ## Build VS Code extension (Phase 4)
 	cd vscode-extension && npm run compile
+
+install-extension: extension-build           ## Package + install .vsix into VS Code
+	cd vscode-extension && npx vsce package --allow-missing-repository
+	code --install-extension vscode-extension/lexscript-0.4.0.vsix
+
+setup: build install-extension               ## First-time setup: build binary + install extension
 
 ## ── Testing ─────────────────────────────────────────────────────────────────
 

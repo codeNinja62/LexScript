@@ -1,4 +1,5 @@
 out/
 node_modules/
-*.vsix
 .vscode-test/
+# *.vsix intentionally tracked so cloners can install without npm
+
