@@ -9,6 +9,7 @@
 
 import * as vscode from "vscode";
 import { execFile } from "child_process";
+import { resolveLexsBinary } from "./resolveBinary";
 
 let panel: vscode.WebviewPanel | undefined;
 
@@ -62,12 +63,11 @@ function openPreview(context: vscode.ExtensionContext): void {
 function updatePreview(source: string): void {
   if (!panel) return;
 
-  const config = vscode.workspace.getConfiguration("lexscript");
-  const serverPath = config.get<string>("serverPath", "lexs");
+  const command = resolveLexsBinary();
 
   // Run `lexs visualize --stdin` feeding the .lxs source via stdin.
   const child = execFile(
-    serverPath,
+    command,
     ["visualize", "--stdin"],
     { timeout: 10000, maxBuffer: 1024 * 1024 },
     (error, stdout, stderr) => {
