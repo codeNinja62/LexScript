@@ -8,16 +8,12 @@
 //   4. On document change, re-run and update the preview.
 
 import * as vscode from "vscode";
-import * as path from "path";
 import { execFile } from "child_process";
 import { resolveLexsBinary } from "./resolveBinary";
 
 let panel: vscode.WebviewPanel | undefined;
-let extensionContext: vscode.ExtensionContext | undefined;
-let lastSource: string | undefined;
 
 export function registerFsmPreview(context: vscode.ExtensionContext): void {
-  extensionContext = context;
   const disposable = vscode.commands.registerCommand(
     "lexscript.showFsmPreview",
     () => openPreview(context)
@@ -28,8 +24,7 @@ export function registerFsmPreview(context: vscode.ExtensionContext): void {
   context.subscriptions.push(
     vscode.workspace.onDidSaveTextDocument((doc) => {
       if (doc.languageId === "lexscript" && panel) {
-        lastSource = doc.getText();
-        updatePreview(lastSource);
+        updatePreview(doc.getText());
       }
     })
   );
@@ -44,42 +39,25 @@ function openPreview(context: vscode.ExtensionContext): void {
     return;
   }
 
-  // Cache source so we can replay it after the webview signals ready.
-  lastSource = editor.document.getText();
-
   if (panel) {
     panel.reveal(vscode.ViewColumn.Beside);
-    // Already loaded — safe to send immediately.
-    updatePreview(lastSource);
-    return;
+  } else {
+    panel = vscode.window.createWebviewPanel(
+      "lexscriptFsmPreview",
+      "LexScript FSM Preview",
+      vscode.ViewColumn.Beside,
+      {
+        enableScripts: true,
+        retainContextWhenHidden: true,
+      }
+    );
+    panel.onDidDispose(() => {
+      panel = undefined;
+    });
+    panel.webview.html = getWebviewHtml();
   }
 
-  panel = vscode.window.createWebviewPanel(
-    "lexscriptFsmPreview",
-    "LexScript FSM Preview",
-    vscode.ViewColumn.Beside,
-    {
-      enableScripts: true,
-      retainContextWhenHidden: true,
-      localResourceRoots: [
-        vscode.Uri.file(path.join(context.extensionPath, "node_modules", "@viz-js", "viz", "dist"))
-      ],
-    }
-  );
-  panel.onDidDispose(() => {
-    panel = undefined;
-  });
-
-  // Handle messages FROM the webview.
-  panel.webview.onDidReceiveMessage((msg) => {
-    if (msg.type === "ready" && lastSource) {
-      // Webview finished loading — now safe to send DOT.
-      updatePreview(lastSource);
-    }
-  });
-
-  panel.webview.html = getWebviewHtml(panel.webview, context);
-  // Do NOT call updatePreview here — wait for the "ready" message.
+  updatePreview(editor.document.getText());
 }
 
 function updatePreview(source: string): void {
@@ -110,21 +88,12 @@ function updatePreview(source: string): void {
   }
 }
 
-function getWebviewHtml(webview: vscode.Webview, context: vscode.ExtensionContext): string {
-  const vizDiskPath = vscode.Uri.file(
-    path.join(context.extensionPath, "node_modules", "@viz-js", "viz", "dist", "viz-global.js")
-  );
-  const vizUri = webview.asWebviewUri(vizDiskPath);
-  const nonce = getNonce();
+function getWebviewHtml(): string {
   return /* html */ `<!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta http-equiv="Content-Security-Policy"
-        content="default-src 'none';
-                 script-src 'nonce-${nonce}' 'wasm-unsafe-eval';
-                 style-src 'unsafe-inline';" />
   <title>LexScript FSM Preview</title>
   <style>
     * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -133,189 +102,138 @@ function getWebviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
       color: var(--vscode-editor-foreground);
       font-family: var(--vscode-font-family);
       overflow: hidden;
-      width: 100vw;
       height: 100vh;
+      display: flex;
+      flex-direction: column;
     }
     #toolbar {
-      position: fixed;
-      top: 8px;
-      right: 12px;
       display: flex;
-      gap: 6px;
-      z-index: 10;
+      align-items: center;
+      gap: 4px;
+      padding: 4px 8px;
+      background: var(--vscode-editorWidget-background, #252526);
+      border-bottom: 1px solid var(--vscode-editorWidget-border, #454545);
+      flex-shrink: 0;
+      user-select: none;
     }
     #toolbar button {
-      background: var(--vscode-button-background);
-      color: var(--vscode-button-foreground);
-      border: none;
-      border-radius: 4px;
-      padding: 3px 9px;
-      cursor: pointer;
+      background: var(--vscode-button-secondaryBackground, #3a3d41);
+      color: var(--vscode-button-secondaryForeground, #ccc);
+      border: 1px solid var(--vscode-button-border, #555);
+      border-radius: 3px;
+      padding: 2px 8px;
       font-size: 14px;
+      cursor: pointer;
+      line-height: 1.4;
     }
     #toolbar button:hover {
-      background: var(--vscode-button-hoverBackground);
+      background: var(--vscode-button-secondaryHoverBackground, #45494e);
     }
-    #viewport {
+    #toolbar span {
+      font-size: 11px;
+      opacity: 0.7;
+      margin-left: 4px;
+    }
+    #graph {
+      flex: 1;
+      overflow: hidden;
+      position: relative;
+    }
+    #graph svg {
       width: 100%;
       height: 100%;
-      overflow: hidden;
-      cursor: grab;
-    }
-    #viewport.panning { cursor: grabbing; }
-    #canvas {
-      transform-origin: 0 0;
-      display: inline-block;
-    }
-    #canvas svg {
       display: block;
     }
     #error {
-      position: fixed;
-      top: 40px;
-      left: 12px;
-      right: 12px;
       color: var(--vscode-errorForeground);
-      background: var(--vscode-inputValidation-errorBackground);
-      border: 1px solid var(--vscode-inputValidation-errorBorder);
-      padding: 8px 12px;
-      border-radius: 4px;
       white-space: pre-wrap;
       font-family: monospace;
-      font-size: 12px;
+      padding: 16px;
       display: none;
     }
-    #loading {
-      position: fixed;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      opacity: 0.5;
+    .loading {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100%;
+      opacity: 0.6;
     }
   </style>
 </head>
 <body>
   <div id="toolbar">
-    <button id="btn-zoom-in"  title="Zoom in">+</button>
-    <button id="btn-zoom-out" title="Zoom out">−</button>
-    <button id="btn-fit"      title="Fit to window">⊡</button>
+    <button id="btn-zoom-in"  title="Zoom in (scroll up)">+</button>
+    <button id="btn-zoom-out" title="Zoom out (scroll down)">−</button>
+    <button id="btn-reset"    title="Reset zoom &amp; pan">⊙ Reset</button>
+    <span id="zoom-level">100%</span>
   </div>
-  <div id="viewport">
-    <div id="canvas"></div>
-  </div>
-  <div id="error"></div>
-  <div id="loading">Waiting for FSM data…</div>
+  <div id="graph"><div class="loading">Waiting for FSM data…</div></div>
+  <pre id="error"></pre>
 
-  <script nonce="${nonce}" src="${vizUri}"></script>
-  <script nonce="${nonce}">
-    const vscode    = acquireVsCodeApi();
-    const viewport  = document.getElementById("viewport");
-    const canvas    = document.getElementById("canvas");
+  <script src="https://unpkg.com/@viz-js/viz@3.4.0/lib/viz-standalone.js"></script>
+  <script src="https://unpkg.com/svg-pan-zoom@3.6.1/dist/svg-pan-zoom.min.js"></script>
+  <script>
+    const graphEl   = document.getElementById("graph");
     const errorEl   = document.getElementById("error");
-    const loadingEl = document.getElementById("loading");
+    const zoomLabel = document.getElementById("zoom-level");
+    let panZoom = null;
 
-    // ── Transform state ──────────────────────────────────────────────────────
-    let scale = 1, tx = 0, ty = 0;
-
-    function applyTransform() {
-      canvas.style.transform = \`translate(\${tx}px, \${ty}px) scale(\${scale})\`;
+    function updateZoomLabel() {
+      if (panZoom) {
+        zoomLabel.textContent = Math.round(panZoom.getZoom() * 100) + "%";
+      }
     }
-
-    function fitToWindow() {
-      const svg = canvas.querySelector("svg");
-      if (!svg) return;
-      const vw = viewport.clientWidth  - 32;
-      const vh = viewport.clientHeight - 32;
-      const sw = svg.getBBox ? svg.getBBox().width  : svg.clientWidth;
-      const sh = svg.getBBox ? svg.getBBox().height : svg.clientHeight;
-      if (!sw || !sh) return;
-      scale = Math.min(vw / sw, vh / sh, 1);
-      tx = (vw - sw * scale) / 2 + 16;
-      ty = (vh - sh * scale) / 2 + 16;
-      applyTransform();
-    }
-
-    // ── Zoom ─────────────────────────────────────────────────────────────────
-    viewport.addEventListener("wheel", (e) => {
-      e.preventDefault();
-      const factor = e.deltaY < 0 ? 1.1 : 0.91;
-      const rect   = viewport.getBoundingClientRect();
-      const mx = e.clientX - rect.left;
-      const my = e.clientY - rect.top;
-      tx = mx - (mx - tx) * factor;
-      ty = my - (my - ty) * factor;
-      scale *= factor;
-      applyTransform();
-    }, { passive: false });
 
     document.getElementById("btn-zoom-in").addEventListener("click", () => {
-      const cx = viewport.clientWidth / 2, cy = viewport.clientHeight / 2;
-      tx = cx - (cx - tx) * 1.2; ty = cy - (cy - ty) * 1.2; scale *= 1.2;
-      applyTransform();
+      panZoom?.zoomIn(); updateZoomLabel();
     });
     document.getElementById("btn-zoom-out").addEventListener("click", () => {
-      const cx = viewport.clientWidth / 2, cy = viewport.clientHeight / 2;
-      tx = cx - (cx - tx) * 0.83; ty = cy - (cy - ty) * 0.83; scale *= 0.83;
-      applyTransform();
+      panZoom?.zoomOut(); updateZoomLabel();
     });
-    document.getElementById("btn-fit").addEventListener("click", fitToWindow);
-
-    // ── Pan ──────────────────────────────────────────────────────────────────
-    let dragging = false, dragX = 0, dragY = 0;
-    viewport.addEventListener("mousedown", (e) => {
-      dragging = true; dragX = e.clientX - tx; dragY = e.clientY - ty;
-      viewport.classList.add("panning");
-    });
-    window.addEventListener("mousemove", (e) => {
-      if (!dragging) return;
-      tx = e.clientX - dragX; ty = e.clientY - dragY;
-      applyTransform();
-    });
-    window.addEventListener("mouseup", () => {
-      dragging = false; viewport.classList.remove("panning");
+    document.getElementById("btn-reset").addEventListener("click", () => {
+      panZoom?.resetZoom(); panZoom?.resetPan(); updateZoomLabel();
     });
 
-    // ── Messages from extension ───────────────────────────────────────────
     window.addEventListener("message", async (event) => {
       const msg = event.data;
       if (msg.type === "dot") {
-        errorEl.style.display  = "none";
-        loadingEl.style.display = "none";
+        errorEl.style.display = "none";
         try {
           const viz = await Viz.instance();
           const svg = viz.renderSVGElement(msg.dot);
           svg.removeAttribute("width");
           svg.removeAttribute("height");
-          canvas.innerHTML = "";
-          canvas.appendChild(svg);
-          // Small delay to let the browser measure the SVG before fitting.
-          requestAnimationFrame(() => setTimeout(fitToWindow, 50));
+          svg.style.width  = "100%";
+          svg.style.height = "100%";
+
+          if (panZoom) { panZoom.destroy(); panZoom = null; }
+          graphEl.innerHTML = "";
+          graphEl.appendChild(svg);
+
+          panZoom = svgPanZoom(svg, {
+            zoomEnabled:    true,
+            panEnabled:     true,
+            controlIconsEnabled: false,
+            fit:            true,
+            center:         true,
+            minZoom:        0.1,
+            maxZoom:        10,
+            zoomScaleSensitivity: 0.3,
+            onZoom:         updateZoomLabel,
+          });
+          updateZoomLabel();
         } catch (e) {
-          errorEl.textContent    = "Render error: " + e.message;
-          errorEl.style.display  = "block";
+          errorEl.textContent = "Render error: " + e.message;
+          errorEl.style.display = "block";
         }
       } else if (msg.type === "error") {
-        loadingEl.style.display = "none";
-        canvas.innerHTML        = "";
-        errorEl.textContent     = msg.message;
-        errorEl.style.display   = "block";
+        if (panZoom) { panZoom.destroy(); panZoom = null; }
+        graphEl.innerHTML = "";
+        errorEl.textContent = msg.message;
+        errorEl.style.display = "block";
       }
     });
-
-    // Tell the extension the webview is ready to receive data.
-    // IMPORTANT: must come AFTER window.addEventListener("message", ...) so the
-    // DOT response cannot arrive before the handler is wired up.
-    vscode.postMessage({ type: "ready" });
   </script>
 </body>
 </html>`;
-}
-
-function getNonce(): string {
-  let text = "";
-  const possible = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-  return text;
 }
