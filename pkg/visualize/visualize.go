@@ -28,15 +28,15 @@ func DOT(c *ast.Contract) string {
 	var b strings.Builder
 
 	b.WriteString(fmt.Sprintf("digraph %s {\n", sanitize(c.Name)))
-	b.WriteString("    rankdir=LR;\n")
+	b.WriteString("    rankdir=TB;\n")
 	b.WriteString("    splines=curved;\n")
 	b.WriteString("    concentrate=true;\n")
-	b.WriteString("    nodesep=0.7;\n")
-	b.WriteString("    ranksep=1.4;\n")
+	b.WriteString("    nodesep=0.9;\n")
+	b.WriteString("    ranksep=1.2;\n")
 	b.WriteString("    graph [fontname=\"Helvetica\" fontsize=13 label=\"")
 	b.WriteString(escDOT(c.Name))
-	b.WriteString(" — State Machine\" labelloc=t labeljust=c pad=0.4];\n")
-	b.WriteString("    node  [fontname=\"Helvetica\" fontsize=11 margin=\"0.2,0.12\"];\n")
+	b.WriteString(" — State Machine\" labelloc=t labeljust=c pad=0.5];\n")
+	b.WriteString("    node  [fontname=\"Helvetica\" fontsize=11 margin=\"0.25,0.15\"];\n")
 	b.WriteString("    edge  [fontname=\"Helvetica\" fontsize=10];\n\n")
 
 	// Find the initial state (first declared state).

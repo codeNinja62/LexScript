@@ -1,11 +1,11 @@
 digraph RentalAgreement {
-    rankdir=LR;
+    rankdir=TB;
     splines=curved;
     concentrate=true;
-    nodesep=0.7;
-    ranksep=1.4;
-    graph [fontname="Helvetica" fontsize=13 label="RentalAgreement — State Machine" labelloc=t labeljust=c pad=0.4];
-    node  [fontname="Helvetica" fontsize=11 margin="0.2,0.12"];
+    nodesep=0.9;
+    ranksep=1.2;
+    graph [fontname="Helvetica" fontsize=13 label="RentalAgreement — State Machine" labelloc=t labeljust=c pad=0.5];
+    node  [fontname="Helvetica" fontsize=11 margin="0.25,0.15"];
     edge  [fontname="Helvetica" fontsize=10];
 
     // Entry point

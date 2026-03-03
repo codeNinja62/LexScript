@@ -105,11 +105,15 @@ function getWebviewHtml(): string {
       overflow: auto;
     }
     #graph {
-      text-align: center;
+      width: 100%;
+      height: calc(100vh - 32px);
+      overflow: auto;
+      box-sizing: border-box;
     }
     #graph svg {
-      max-width: 100%;
+      width: 100%;
       height: auto;
+      display: block;
     }
     #error {
       color: var(--vscode-errorForeground);
@@ -142,6 +146,11 @@ function getWebviewHtml(): string {
         try {
           const viz = await Viz.instance();
           const svg = viz.renderSVGElement(msg.dot);
+          // Remove fixed width/height so CSS can scale it freely.
+          svg.removeAttribute("width");
+          svg.removeAttribute("height");
+          svg.style.width = "100%";
+          svg.style.height = "auto";
           graphEl.innerHTML = "";
           graphEl.appendChild(svg);
         } catch (e) {
