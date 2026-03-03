@@ -11,7 +11,8 @@
     "Programming Languages"
   ],
   "activationEvents": [
-    "onLanguage:lexscript"
+    "onLanguage:lexscript",
+    "onCommand:lexscript.showFsmPreview"
   ],
   "main": "./out/extension.js",
   "contributes": {
