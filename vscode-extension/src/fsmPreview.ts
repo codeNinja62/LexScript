@@ -107,7 +107,7 @@ function getWebviewHtml(webview: vscode.Webview, context: vscode.ExtensionContex
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="Content-Security-Policy"
         content="default-src 'none';
-                 script-src 'nonce-${nonce}';
+                 script-src 'nonce-${nonce}' 'wasm-unsafe-eval';
                  style-src 'unsafe-inline';" />
   <title>LexScript FSM Preview</title>
   <style>
