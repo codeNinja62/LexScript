@@ -1,7 +1,11 @@
 digraph RentalAgreement {
     rankdir=LR;
-    graph [fontname="Helvetica" fontsize=12 label="RentalAgreement — State Machine" labelloc=t];
-    node  [fontname="Helvetica" fontsize=11];
+    splines=curved;
+    concentrate=true;
+    nodesep=0.7;
+    ranksep=1.4;
+    graph [fontname="Helvetica" fontsize=13 label="RentalAgreement — State Machine" labelloc=t labeljust=c pad=0.4];
+    node  [fontname="Helvetica" fontsize=11 margin="0.2,0.12"];
     edge  [fontname="Helvetica" fontsize=10];
 
     // Entry point
@@ -9,12 +13,12 @@ digraph RentalAgreement {
     __start -> AwaitingDeposit;
 
     // States
-    AwaitingDeposit [label="Awaiting Deposit" shape=box style=rounded];
-    Active [label="Active" shape=box style=rounded];
-    Fulfilled [label="Fulfilled" shape=doublecircle style=filled fillcolor="#b7f5b7" color="#2e7d32"];
-    TenantBreached [label="Tenant Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828"];
-    LandlordBreached [label="Landlord Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828"];
-    Expired [label="Expired" shape=doublecircle style=filled fillcolor="#fff9c4" color="#f57f17"];
+    AwaitingDeposit [label="Awaiting Deposit" shape=box style="rounded,filled" fillcolor="#f5f5f5" color="#555555"];
+    Active [label="Active" shape=box style="rounded,filled" fillcolor="#f5f5f5" color="#555555"];
+    Fulfilled [label="Fulfilled" shape=doublecircle style=filled fillcolor="#b7f5b7" color="#2e7d32" penwidth=2 width=1.1 height=1.1 fixedsize=true];
+    TenantBreached [label="Tenant Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828" penwidth=2 width=1.1 height=1.1 fixedsize=true];
+    LandlordBreached [label="Landlord Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828" penwidth=2 width=1.1 height=1.1 fixedsize=true];
+    Expired [label="Expired" shape=doublecircle style=filled fillcolor="#fff9c4" color="#f57f17" penwidth=2 width=1.1 height=1.1 fixedsize=true];
 
     // Transitions
     AwaitingDeposit -> Active [label="Payment Received"];

@@ -29,10 +29,14 @@ func DOT(c *ast.Contract) string {
 
 	b.WriteString(fmt.Sprintf("digraph %s {\n", sanitize(c.Name)))
 	b.WriteString("    rankdir=LR;\n")
-	b.WriteString("    graph [fontname=\"Helvetica\" fontsize=12 label=\"")
+	b.WriteString("    splines=curved;\n")
+	b.WriteString("    concentrate=true;\n")
+	b.WriteString("    nodesep=0.7;\n")
+	b.WriteString("    ranksep=1.4;\n")
+	b.WriteString("    graph [fontname=\"Helvetica\" fontsize=13 label=\"")
 	b.WriteString(escDOT(c.Name))
-	b.WriteString(" — State Machine\" labelloc=t];\n")
-	b.WriteString("    node  [fontname=\"Helvetica\" fontsize=11];\n")
+	b.WriteString(" — State Machine\" labelloc=t labeljust=c pad=0.4];\n")
+	b.WriteString("    node  [fontname=\"Helvetica\" fontsize=11 margin=\"0.2,0.12\"];\n")
 	b.WriteString("    edge  [fontname=\"Helvetica\" fontsize=10];\n\n")
 
 	// Find the initial state (first declared state).
@@ -106,19 +110,19 @@ func nodeDefinition(name, termKind string) string {
 	switch termKind {
 	case "fulfilled":
 		return fmt.Sprintf(
-			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#b7f5b7\" color=\"#2e7d32\"];\n",
+			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#b7f5b7\" color=\"#2e7d32\" penwidth=2 width=1.1 height=1.1 fixedsize=true];\n",
 			sanitize(name), label)
 	case "breached":
 		return fmt.Sprintf(
-			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#ffcdd2\" color=\"#c62828\"];\n",
+			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#ffcdd2\" color=\"#c62828\" penwidth=2 width=1.1 height=1.1 fixedsize=true];\n",
 			sanitize(name), label)
 	case "expired":
 		return fmt.Sprintf(
-			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#fff9c4\" color=\"#f57f17\"];\n",
+			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#fff9c4\" color=\"#f57f17\" penwidth=2 width=1.1 height=1.1 fixedsize=true];\n",
 			sanitize(name), label)
 	default:
 		return fmt.Sprintf(
-			"    %s [label=%q shape=box style=rounded];\n",
+			"    %s [label=%q shape=box style=\"rounded,filled\" fillcolor=\"#f5f5f5\" color=\"#555555\"];\n",
 			sanitize(name), label)
 	}
 }
