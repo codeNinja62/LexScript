@@ -27,13 +27,6 @@ import (
 func DOT(c *ast.Contract) string {
 	var b strings.Builder
 
-	// Build a lookup map: time_limit name → "value unit" string.
-	timeLimits := make(map[string]string)
-	for _, decl := range c.Declarations {
-		if decl.TimeLimit != nil {
-			timeLimits[decl.TimeLimit.Name] = fmt.Sprintf("%d %s", decl.TimeLimit.Value, decl.TimeLimit.Unit)
-		}
-	}
 	b.WriteString(fmt.Sprintf("digraph %s {\n", sanitize(c.Name)))
 	b.WriteString("    rankdir=TB;\n")
 	b.WriteString("    splines=curved;\n")
@@ -86,8 +79,8 @@ func DOT(c *ast.Contract) string {
 				continue
 			}
 			tr := body.Transition
-			label := triggerLabel(tr.Trigger, timeLimits)
-			b.WriteString(fmt.Sprintf("    %s -> %s [label=%q]\n",
+			label := triggerLabel(tr.Trigger)
+			b.WriteString(fmt.Sprintf("    %s -> %s [label=%q];\n",
 				sanitize(s.Name), sanitize(tr.Target), label))
 		}
 	}
@@ -113,21 +106,22 @@ func terminalKind(s *ast.StateDecl) string {
 
 // nodeDefinition returns the DOT node attribute line for a state.
 func nodeDefinition(name, termKind string) string {
-	label := splitCamel(name)
+	label := strings.ReplaceAll(splitCamel(name), " ", "\n")
 	switch termKind {
 	case "fulfilled":
 		return fmt.Sprintf(
-			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#b7f5b7\" color=\"#2e7d32\" penwidth=2 width=1.1 height=1.1 fixedsize=true];\n",
+			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#b7f5b7\" color=\"#2e7d32\" penwidth=2 width=1.2 height=1.2];\n",
 			sanitize(name), label)
 	case "breached":
 		return fmt.Sprintf(
-			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#ffcdd2\" color=\"#c62828\" penwidth=2 width=1.1 height=1.1 fixedsize=true];\n",
+			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#ffcdd2\" color=\"#c62828\" penwidth=2 width=1.2 height=1.2];\n",
 			sanitize(name), label)
 	case "expired":
 		return fmt.Sprintf(
-			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#fff9c4\" color=\"#f57f17\" penwidth=2 width=1.1 height=1.1 fixedsize=true];\n",
+			"    %s [label=%q shape=doublecircle style=filled fillcolor=\"#fff9c4\" color=\"#f57f17\" penwidth=2 width=1.2 height=1.2];\n",
 			sanitize(name), label)
 	default:
+		label = splitCamel(name)
 		return fmt.Sprintf(
 			"    %s [label=%q shape=box style=\"rounded,filled\" fillcolor=\"#f5f5f5\" color=\"#555555\"];\n",
 			sanitize(name), label)
@@ -135,16 +129,12 @@ func nodeDefinition(name, termKind string) string {
 }
 
 // triggerLabel produces a human-readable edge label from a Trigger node.
-// timeLimits maps declared time_limit names to their "value unit" string.
-func triggerLabel(t *ast.Trigger, timeLimits map[string]string) string {
+func triggerLabel(t *ast.Trigger) string {
 	switch {
 	case t.TimeLimitRef != nil:
-		if val, ok := timeLimits[t.TimeLimitRef.Ref]; ok {
-			return "after " + val
-		}
-		return "after " + t.TimeLimitRef.Ref
+		return fmt.Sprintf("⏱ time_limit(%s)", t.TimeLimitRef.Ref)
 	case t.BreachRef != nil:
-		return "breach: " + t.BreachRef.Party
+		return fmt.Sprintf("⚠ breach(%s)", t.BreachRef.Party)
 	case t.EventName != nil:
 		return splitCamel(*t.EventName)
 	default:

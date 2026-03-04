@@ -15,15 +15,15 @@ digraph RentalAgreement {
     // States
     AwaitingDeposit [label="Awaiting Deposit" shape=box style="rounded,filled" fillcolor="#f5f5f5" color="#555555"];
     Active [label="Active" shape=box style="rounded,filled" fillcolor="#f5f5f5" color="#555555"];
-    Fulfilled [label="Fulfilled" shape=doublecircle style=filled fillcolor="#b7f5b7" color="#2e7d32" penwidth=2 width=1.1 height=1.1 fixedsize=true];
-    TenantBreached [label="Tenant Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828" penwidth=2 width=1.1 height=1.1 fixedsize=true];
-    LandlordBreached [label="Landlord Breached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828" penwidth=2 width=1.1 height=1.1 fixedsize=true];
-    Expired [label="Expired" shape=doublecircle style=filled fillcolor="#fff9c4" color="#f57f17" penwidth=2 width=1.1 height=1.1 fixedsize=true];
+    Fulfilled [label="Fulfilled" shape=doublecircle style=filled fillcolor="#b7f5b7" color="#2e7d32" penwidth=2 width=1.2 height=1.2];
+    TenantBreached [label="Tenant\nBreached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828" penwidth=2 width=1.2 height=1.2];
+    LandlordBreached [label="Landlord\nBreached" shape=doublecircle style=filled fillcolor="#ffcdd2" color="#c62828" penwidth=2 width=1.2 height=1.2];
+    Expired [label="Expired" shape=doublecircle style=filled fillcolor="#fff9c4" color="#f57f17" penwidth=2 width=1.2 height=1.2];
 
     // Transitions
-    AwaitingDeposit -> Active [label="Payment Received"]
-    AwaitingDeposit -> Expired [label="after 5 business_days"]
-    Active -> TenantBreached [label="breach: Tenant"]
-    Active -> LandlordBreached [label="breach: Landlord"]
-    Active -> Fulfilled [label="after 12 months"]
+    AwaitingDeposit -> Active [label="Payment Received"];
+    AwaitingDeposit -> Expired [label="⏱ time_limit(payment_grace)"];
+    Active -> TenantBreached [label="⚠ breach(Tenant)"];
+    Active -> LandlordBreached [label="⚠ breach(Landlord)"];
+    Active -> Fulfilled [label="⏱ time_limit(lease_duration)"];
 }
