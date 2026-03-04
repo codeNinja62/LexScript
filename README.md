@@ -805,4 +805,16 @@ The PDF backend (`pdf_emitter.go`) reuses the same `ContractData` model and rend
 
 ---
 
-*LexScript v0.4 — Compiler Construction Project, Semester 6*
+---
+
+## 14. Contributing
+
+Contributions are welcome! See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, code style guidelines, and pull request conventions.
+
+## 15. License
+
+LexScript is released under the [MIT License](LICENSE).
+
+---
+
+*LexScript v0.4 — Compiler Construction Project*
