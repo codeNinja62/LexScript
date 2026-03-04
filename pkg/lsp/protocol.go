@@ -39,10 +39,10 @@ type Location struct {
 
 // Diagnostic represents a compiler error or warning.
 type Diagnostic struct {
-	Range    Range              `json:"range"`
+	Range    Range               `json:"range"`
 	Severity *DiagnosticSeverity `json:"severity,omitempty"`
-	Source   *string            `json:"source,omitempty"`
-	Message  string             `json:"message"`
+	Source   *string             `json:"source,omitempty"`
+	Message  string              `json:"message"`
 }
 
 type DiagnosticSeverity int
@@ -68,9 +68,9 @@ const (
 // ---------------------------------------------------------------------------
 
 type InitializeParams struct {
-	ProcessID    *int              `json:"processId"`
-	RootURI      *string           `json:"rootUri"`
-	Capabilities json.RawMessage   `json:"capabilities"`
+	ProcessID    *int            `json:"processId"`
+	RootURI      *string         `json:"rootUri"`
+	Capabilities json.RawMessage `json:"capabilities"`
 }
 
 type InitializeResult struct {
@@ -183,9 +183,9 @@ type CompletionParams struct {
 }
 
 type CompletionItem struct {
-	Label  string          `json:"label"`
+	Label  string              `json:"label"`
 	Kind   *CompletionItemKind `json:"kind,omitempty"`
-	Detail *string         `json:"detail,omitempty"`
+	Detail *string             `json:"detail,omitempty"`
 }
 
 type CompletionItemKind int

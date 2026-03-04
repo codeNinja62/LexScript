@@ -59,9 +59,9 @@ type compileRequest struct {
 }
 
 type compileResponse struct {
-	Markdown    string       `json:"markdown,omitempty"`
-	Diagnostics []diagEntry  `json:"diagnostics"`
-	Success     bool         `json:"success"`
+	Markdown    string      `json:"markdown,omitempty"`
+	Diagnostics []diagEntry `json:"diagnostics"`
+	Success     bool        `json:"success"`
 }
 
 type diagEntry struct {
